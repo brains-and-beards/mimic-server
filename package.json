@@ -1,0 +1,20 @@
+{
+  "name": "apimockerserver",
+  "version": "0.0.1",
+  "description": "APIMocker Server",
+  "main": "index.ts",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/brainsandbeards/APIMockerServer.git"
+  },
+  "author": "Brains & Beards",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "bugs": {
+    "url": "https://gitlab.com/brainsandbeards/APIMockerServer/issues"
+  },
+  "homepage": "https://gitlab.com/brainsandbeards/APIMockerServer#README",
+  "private": true
+}
