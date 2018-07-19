@@ -51,3 +51,6 @@ jspm_packages
 
 # Electron-forge output dir
 out
+
+# Ignore built ts files
+dist/**/*
