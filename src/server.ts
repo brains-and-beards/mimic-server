@@ -1,7 +1,7 @@
+#!/usr/bin/env node
 /* tslint:disable:no-console */
 import commander from 'commander';
 import fs from 'fs';
-import path from 'path';
 import app from './app';
 
 commander.option('-c, --config <path>', 'Path to config file').parse(process.argv);
@@ -38,9 +38,8 @@ class Server {
       config = './apimocker.json';
     }
     console.log(config);
-    const filePath = path.join(__dirname, '..', config);
-    this.readFile(filePath);
-    this.watchConfigForChanges(filePath);
+    this.readFile(config);
+    this.watchConfigForChanges(config);
 
     app.listen(this.port, (err: any) => {
       if (err) {
