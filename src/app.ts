@@ -2,8 +2,10 @@ import express from 'express';
 
 class App {
   public express: any;
+  private config: IConfig;
 
-  constructor() {
+  constructor(config: IConfig) {
+    this.config = config;
     this.express = express();
     this.mountRoutes();
   }
@@ -19,4 +21,4 @@ class App {
   }
 }
 
-export default new App().express;
+export default App;

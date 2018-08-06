@@ -2,7 +2,7 @@
 /* tslint:disable:no-console */
 import commander from 'commander';
 import fs from 'fs';
-import app from './app';
+import App from './app';
 
 commander.option('-c, --config <path>', 'Path to config file').parse(process.argv);
 
@@ -29,19 +29,32 @@ class Server {
     });
   };
 
+  parseConfig = (configData: any): IConfig => {
+    const projects: ReadonlyArray<IProject> = this.parseProjects(configData.projects);
+    return {
+      projects,
+    };
+  };
+
+  parseProjects = (projectsData: any): ReadonlyArray<IProject> => {
+    return projectsData.map((projectData: any) => {});
+  };
+
   run = () => {
     console.log('Starting run');
-    let { config } = commander;
-    if (config) {
-      console.log('Reading config file from: ' + config);
+    let { configData } = commander;
+    if (configData) {
+      console.log('Reading config file from: ' + configData);
     } else {
-      config = './apimocker.json';
+      configData = './apimocker.json';
     }
-    console.log(config);
-    this.readFile(config);
-    this.watchConfigForChanges(config);
+    console.log(configData);
+    this.readFile(configData);
+    this.watchConfigForChanges(configData);
 
-    app.listen(this.port, (err: any) => {
+    const config: IConfig = configData;
+    const app = new App(configData);
+    app.express.listen(this.port, (err: any) => {
       if (err) {
         return console.log(err);
       }

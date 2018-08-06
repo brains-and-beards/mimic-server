@@ -17,7 +17,9 @@
     "serve-debug": "nodemon --inspect dist/server.js",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\""
   },
-  "bin": { "apimocker_server": "./dist/server.js"},
+  "bin": {
+    "apimocker_server": "./dist/server.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@gitlab.com/brainsandbeards/APIMockerServer.git"
@@ -43,7 +45,9 @@
     "typescript": "^2.9.2"
   },
   "dependencies": {
+    "@types/normalizr": "^2.0.18",
     "commander": "^2.16.0",
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "normalizr": "^3.2.4"
   }
 }
