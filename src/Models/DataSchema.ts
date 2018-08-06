@@ -1,12 +1,11 @@
 import { schema } from 'normalizr';
 
-export const ResponseSchema = new schema.Entity('response');
-export const RequestSchema = new schema.Entity('request');
-export const EndpointSchema = new schema.Entity('endpoints', {
-  response: ResponseSchema,
-  request: RequestSchema,
-});
-export const ProjectSchema = new schema.Entity('project', {
-  endpoints: [EndpointSchema],
-});
-export const ConfigSchema = new schema.Array(ProjectSchema);
+export const EndpointSchema = new schema.Entity('endpoints', {}, { idAttribute: 'uuid' });
+export const ProjectSchema = new schema.Entity(
+  'projects',
+  {
+    endpoints: [EndpointSchema],
+  },
+  { idAttribute: 'uuid' }
+);
+export const ConfigSchema = { projects: new schema.Array(ProjectSchema) };

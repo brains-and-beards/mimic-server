@@ -2,7 +2,9 @@
 /* tslint:disable:no-console */
 import commander from 'commander';
 import fs from 'fs';
+import { normalize } from 'normalizr';
 import App from './app';
+import { ConfigSchema } from './Models/DataSchema';
 
 commander.option('-c, --config <path>', 'Path to config file').parse(process.argv);
 
@@ -15,7 +17,7 @@ class Server {
       if (!error) {
         console.log('Received: ' + data);
         const json = JSON.parse(data);
-        console.log('json test: ' + json.test);
+        const config = this.parseConfig(json);
       } else {
         console.error(error);
       }
@@ -25,19 +27,16 @@ class Server {
   watchConfigForChanges = (configPath: string) => {
     fs.watchFile(configPath, () => {
       console.log(configPath + ' changed');
-      this.readFile(configPath);
+      const json = this.readFile(configPath);
+      const config = this.parseConfig(json);
     });
   };
 
   parseConfig = (configData: any): IConfig => {
-    const projects: ReadonlyArray<IProject> = this.parseProjects(configData.projects);
-    return {
-      projects,
-    };
-  };
-
-  parseProjects = (projectsData: any): ReadonlyArray<IProject> => {
-    return projectsData.map((projectData: any) => {});
+    const normalizedData = normalize(configData, ConfigSchema);
+    console.log('-------------------------------');
+    console.log(normalizedData);
+    return {} as IConfig;
   };
 
   run = () => {
