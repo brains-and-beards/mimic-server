@@ -10,12 +10,23 @@ commander.option('-c, --config <path>', 'Path to config file').parse(process.arg
 
 class Server {
   port = process.env.PORT || 3000;
+  configFilePath: string;
+
+  constructor() {
+    const { config } = commander;
+    if (!config) {
+      this.configFilePath = './apimocker.json';
+    } else {
+      this.configFilePath = config;
+    }
+    console.log('Reading config file from: ' + this.configFilePath);
+  }
 
   readFile = (configPath: string) => {
     fs.readFile(configPath, { encoding: 'utf-8' }, (error, data) => {
       if (!error) {
         const json = JSON.parse(data);
-        const config = this.parseConfig(json);
+        this.readAndStart(json);
       } else {
         console.error(error);
       }
@@ -24,9 +35,10 @@ class Server {
 
   watchConfigForChanges = (configPath: string) => {
     fs.watchFile(configPath, () => {
+      console.log('-----------------------------------------');
       console.log(configPath + ' changed');
       const json = this.readFile(configPath);
-      const config = this.parseConfig(json);
+      this.readAndStart(json);
     });
   };
 
@@ -35,18 +47,20 @@ class Server {
     return {} as IConfig;
   };
 
+  readAndStart = (json: object) => {
+    const config = this.parseConfig(json);
+    this.startServer(config);
+  };
+
   run = () => {
     console.log('Starting run');
-    let { configData } = commander;
-    if (!configData) {
-      configData = './apimocker.json';
-    }
-    console.log('Reading config file from: ' + configData);
-    this.readFile(configData);
-    this.watchConfigForChanges(configData);
+    this.readFile(this.configFilePath);
+    this.watchConfigForChanges(this.configFilePath);
+  };
 
-    const config: IConfig = configData;
-    const app = new App(configData);
+  startServer = (config: IConfig) => {
+    // const config: IConfig = this.configFilePath as any; // TODO: add the real code here
+    const app = new App(config);
     app.express.listen(this.port, (err: any) => {
       if (err) {
         return console.error(err);
