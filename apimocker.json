@@ -1,4 +1,7 @@
 {
+  "version": "0.0.1",
+  "httpPort": "3000",
+  "httpsPort": "3001",
   "projects": [
     {
       "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7ead2b8",
