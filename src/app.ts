@@ -3,7 +3,7 @@ import express from 'express';
 import { Server } from 'http';
 
 class App {
-  port = process.env.PORT || 3000; //TODO: get port from the config file
+  port = process.env.PORT || 3000; // TODO: get port from the config file
   private express: express.Express;
   private config: IConfig;
   private httpServer?: Server;
