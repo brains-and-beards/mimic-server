@@ -61,11 +61,28 @@ class Server {
 
   startServer = (config: IConfig) => {
     if (this.app && this.app.isListening()) {
-      this.app.stop();
+      this.app.stop(error => {
+        if (error) {
+          console.error(error);
+        } else {
+          console.log('close');
+          this._startServer(config);
+        }
+      });
+    } else {
+      this._startServer(config);
     }
+  };
 
+  private _startServer = (config: IConfig) => {
     this.app = new App(config);
-    this.app.start();
+    this.app.start(error => {
+      if (error) {
+        return console.error(error);
+      }
+
+      return console.log(`server is listening`);
+    });
   };
 }
 
