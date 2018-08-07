@@ -3,14 +3,16 @@
 import commander from 'commander';
 import fs from 'fs';
 import { normalize } from 'normalizr';
+import { promisify } from 'util';
 import App from './app';
 import { ConfigSchema } from './Models/DataSchema';
 
 commander.option('-c, --config <path>', 'Path to config file').parse(process.argv);
 
 class Server {
-  port = process.env.PORT || 3000;
+  readFileAsync = promisify(fs.readFile);
   configFilePath: string;
+  app?: App;
 
   constructor() {
     const { config } = commander;
@@ -22,23 +24,16 @@ class Server {
     console.log('Reading config file from: ' + this.configFilePath);
   }
 
-  readFile = (configPath: string) => {
-    fs.readFile(configPath, { encoding: 'utf-8' }, (error, data) => {
-      if (!error) {
-        const json = JSON.parse(data);
-        this.readAndStart(json);
-      } else {
-        console.error(error);
-      }
-    });
-  };
+  async readFile(configPath: string) {
+    const data = await this.readFileAsync(configPath, { encoding: 'utf-8' });
+    return JSON.parse(data);
+  }
 
   watchConfigForChanges = (configPath: string) => {
     fs.watchFile(configPath, () => {
       console.log('-----------------------------------------');
       console.log(configPath + ' changed');
-      const json = this.readFile(configPath);
-      this.readAndStart(json);
+      this.readAndStart();
     });
   };
 
@@ -47,27 +42,30 @@ class Server {
     return {} as IConfig;
   };
 
-  readAndStart = (json: object) => {
-    const config = this.parseConfig(json);
-    this.startServer(config);
+  readAndStart = () => {
+    this.readFile(this.configFilePath)
+      .then(json => {
+        const config = this.parseConfig(json);
+        this.startServer(config);
+      })
+      .catch(error => {
+        console.error(error);
+      });
   };
 
   run = () => {
     console.log('Starting run');
-    this.readFile(this.configFilePath);
     this.watchConfigForChanges(this.configFilePath);
+    this.readAndStart();
   };
 
   startServer = (config: IConfig) => {
-    // const config: IConfig = this.configFilePath as any; // TODO: add the real code here
-    const app = new App(config);
-    app.express.listen(this.port, (err: any) => {
-      if (err) {
-        return console.error(err);
-      }
+    if (this.app && this.app.isListening()) {
+      this.app.stop();
+    }
 
-      return console.log(`server is listening on ${this.port}`);
-    });
+    this.app = new App(config);
+    this.app.start();
   };
 }
 
