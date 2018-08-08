@@ -15,7 +15,8 @@
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "debug": "yarn run build && yarn run watch-debug",
     "serve-debug": "nodemon --inspect dist/server.js",
-    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\""
+    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\"",
+    "check-all": "yarn tslint && yarn build-ts && yarn test"
   },
   "bin": {
     "apimocker_server": "./dist/server.js"  
