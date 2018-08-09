@@ -49,6 +49,7 @@
     "@types/normalizr": "^2.0.18",
     "commander": "^2.16.0",
     "express": "^4.16.3",
-    "normalizr": "^3.2.4"
+    "normalizr": "^3.2.4",
+    "proxy": "git+ssh://git@github.com:brains-and-beards/proxy.git"
   }
 }
