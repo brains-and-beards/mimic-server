@@ -6,6 +6,11 @@
     {
       "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7ead2b8",
       "name": "Nata123lia",
+      "fallbackUrlPrefix": {
+        "domain": "haikuco.de",
+        "port": "",
+        "path": "/blog"
+      },
       "endpoints": [
         {
           "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b8",
