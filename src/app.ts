@@ -1,7 +1,6 @@
 /* tslint:disable:no-console */
 import express from 'express';
 import HTTP from 'http';
-import Proxy from 'proxy';
 import _ from 'lodash';
 
 class App {
@@ -34,24 +33,12 @@ class App {
     this.httpServer = this.express.listen(this.port, (error: Error) => {
       callback(error);
     });
-
-    this.proxyServer = Proxy(HTTP.createServer());
-
-    this.proxyServer.listen(3128, function() {
-      console.log('HTTP(s) proxy server listening on port %d', this.address().port);
-    });
-    this.proxyServer.on('proxyRequest', function(req: any) {
-      console.log('Handling a request before it happens, like a boss', req.url);
-      req.url = 'http://localhost:/';
-    });
   };
 
   private mountRoutes(): void {
     const { endpoints, projects } = this.config.entities;
     _.forEach(endpoints, (endpoint: IEndpoint) => {
-      console.log('Registering endpoint: ', endpoint);
       const project = projects[endpoint.projectId];
-      console.log('Registering endpoint, project: ', project);
       this.register(endpoint, project.name);
     });
   }
@@ -64,17 +51,11 @@ class App {
 
     this.express[method](path, (req: any, res: any) => {
       const response = this.substituteParams(endpoint.response, req.params);
-      console.log('Logging touched endpoint, response: ', response);
 
       if (timeout > 0) {
-        setTimeout(() => {
-          console.log('After timeout, sending a response, status code:', statusCode);
-          res.status(200).send(response);
-        }, timeout);
+        setTimeout(() => res.status(statusCode).send(response), timeout);
       } else {
         res.send(response);
-
-        // res.status(statusCode).send(response);
       }
     });
   }

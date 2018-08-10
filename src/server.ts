@@ -13,7 +13,6 @@ commander.option('-c, --config <path>', 'Path to config file').parse(process.arg
 class Server {
   readFileAsync = promisify(fs.readFile);
   configFilePath: string;
-
   app?: App;
 
   constructor() {
@@ -41,7 +40,6 @@ class Server {
 
   parseConfig = (configData: any): IConfig => {
     const normalizedData = normalize(configData, ConfigSchema);
-    console.log('Normalized config after parsing: ', normalizedData);
     return normalizedData as IConfig;
   };
 
@@ -49,7 +47,6 @@ class Server {
     this.readFile(this.configFilePath)
       .then(json => {
         const config = this.parseConfig(json);
-        console.log('Loaded config: ', config);
         this.startServer(config);
       })
       .catch(error => {

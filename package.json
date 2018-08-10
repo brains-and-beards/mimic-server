@@ -19,7 +19,7 @@
     "check-all": "yarn tslint && yarn build-ts && yarn test"
   },
   "bin": {
-    "apimocker_server": "./dist/server.js"  
+    "apimocker_server": "./dist/server.js"
   },
   "repository": {
     "type": "git",
@@ -51,7 +51,6 @@
     "commander": "^2.16.0",
     "express": "^4.16.3",
     "lodash": "^4.17.10",
-    "normalizr": "^3.2.4",
-    "proxy": "git+ssh://git@github.com:brains-and-beards/proxy.git"
+    "normalizr": "^3.2.4"
   }
 }
