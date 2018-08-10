@@ -2,6 +2,7 @@
 import express from 'express';
 import HTTP from 'http';
 import Proxy from 'proxy';
+import _ from 'lodash';
 
 class App {
   port = process.env.PORT || 3000; // TODO: get port from the config file
@@ -46,13 +47,50 @@ class App {
   };
 
   private mountRoutes(): void {
-    const router = express.Router();
-    router.get('/', (req: any, res: any) => {
-      res.json({
-        message: 'Hello World!',
-      });
+    const { endpoints, projects } = this.config.entities;
+    _.forEach(endpoints, (endpoint: IEndpoint) => {
+      console.log('Registering endpoint: ', endpoint);
+      const project = projects[endpoint.projectId];
+      console.log('Registering endpoint, project: ', project);
+      this.register(endpoint, project.name);
     });
-    this.express.use('/', router);
+  }
+
+  private register(endpoint: IEndpoint, scope = ''): void {
+    const path = '/' + scope + endpoint.path;
+    const method = endpoint.method.toLowerCase();
+    const statusCode = endpoint.statusCode || 200;
+    const timeout = endpoint.timeout || 0;
+
+    this.express[method](path, (req: any, res: any) => {
+      const response = this.substituteParams(endpoint.response, req.params);
+      console.log('Logging touched endpoint, response: ', response);
+
+      if (timeout > 0) {
+        setTimeout(() => {
+          console.log('After timeout, sending a response, status code:', statusCode);
+          res.status(200).send(response);
+        }, timeout);
+      } else {
+        res.send(response);
+
+        // res.status(statusCode).send(response);
+      }
+    });
+  }
+
+  private substituteParams(resp: any, params: any): any {
+    for (const i in resp) {
+      // Check nested objects recursively
+      if (typeof resp[i] === 'object') {
+        resp[i] = this.substituteParams(resp[i], params);
+      } else if (typeof resp[i] === 'string' && resp[i][0] === ':') {
+        // If value starts with a colon, substitute it with param value
+        const paramName = resp[i].slice(1);
+        resp[i] = params[paramName];
+      }
+    }
+    return resp;
   }
 }
 

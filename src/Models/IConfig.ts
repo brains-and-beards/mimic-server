@@ -1,3 +1,7 @@
 interface IConfig {
-  projects: ReadonlyArray<IProject>;
+  entities: {
+    endpoints: ReadonlyArray<any>;
+    projects: ReadonlyArray<any>;
+  };
+  result: any;
 }

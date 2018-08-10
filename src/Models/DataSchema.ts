@@ -1,6 +1,10 @@
 import { schema } from 'normalizr';
 
-export const EndpointSchema = new schema.Entity('endpoints', {}, { idAttribute: 'uuid' });
+export const EndpointSchema = new schema.Entity(
+  'endpoints',
+  {},
+  { idAttribute: 'uuid', processStrategy: (value, parent, key) => ({ ...value, projectId: parent.uuid }) }
+);
 export const ProjectSchema = new schema.Entity(
   'projects',
   {

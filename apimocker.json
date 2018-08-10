@@ -31,9 +31,9 @@
           "uuid": "9cf63f90-93ce-11e8-9820-ad3aeb80f7df",
           "path": "/wwwwwoqoq",
           "method": "GET",
-          "response": {},
+          "response": { "errors": "An unknown error has occured. Blame me." },
           "request": { "body": {}, "params": "" },
-          "statusCode": 200,
+          "statusCode": 400,
           "timeout": 0,
           "initialized": true
         },
@@ -51,9 +51,9 @@
           "uuid": "3a61ce20-950a-11e8-9fd4-45aabbd7cc33",
           "path": "/momoko",
           "method": "GET",
-          "response": {},
+          "response": { "foo": "bar" },
           "request": { "body": {}, "params": "" },
-          "statusCode": 111,
+          "statusCode": 200,
           "timeout": 111,
           "initialized": true
         }
@@ -61,4 +61,3 @@
     }
   ]
 }
-

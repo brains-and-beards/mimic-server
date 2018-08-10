@@ -4,6 +4,7 @@ import commander from 'commander';
 import fs from 'fs';
 import { normalize } from 'normalizr';
 import { promisify } from 'util';
+
 import App from './app';
 import { ConfigSchema } from './Models/DataSchema';
 
@@ -12,6 +13,7 @@ commander.option('-c, --config <path>', 'Path to config file').parse(process.arg
 class Server {
   readFileAsync = promisify(fs.readFile);
   configFilePath: string;
+
   app?: App;
 
   constructor() {
@@ -39,13 +41,15 @@ class Server {
 
   parseConfig = (configData: any): IConfig => {
     const normalizedData = normalize(configData, ConfigSchema);
-    return {} as IConfig;
+    console.log('Normalized config after parsing: ', normalizedData);
+    return normalizedData as IConfig;
   };
 
   readAndStart = () => {
     this.readFile(this.configFilePath)
       .then(json => {
         const config = this.parseConfig(json);
+        console.log('Loaded config: ', config);
         this.startServer(config);
       })
       .catch(error => {

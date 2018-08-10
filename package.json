@@ -46,9 +46,11 @@
     "typescript": "^2.9.2"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.116",
     "@types/normalizr": "^2.0.18",
     "commander": "^2.16.0",
     "express": "^4.16.3",
+    "lodash": "^4.17.10",
     "normalizr": "^3.2.4",
     "proxy": "git+ssh://git@github.com:brains-and-beards/proxy.git"
   }
