@@ -8,7 +8,6 @@ class App {
   private express: express.Express;
   private config: IConfig;
   private httpServer?: HTTP.Server;
-  private proxyServer?: any;
 
   constructor(config: IConfig) {
     this.config = config;
@@ -26,7 +25,6 @@ class App {
         callback(error);
       });
     }
-    // TODO: stop proxy server
   };
 
   start = (callback: ((error: Error) => void)) => {
@@ -41,6 +39,7 @@ class App {
       const project = projects[endpoint.projectId];
       this.register(endpoint, project.name);
     });
+    this.addMissedRouteHandler();
   }
 
   private register(endpoint: IEndpoint, scope = ''): void {
@@ -72,6 +71,21 @@ class App {
       }
     }
     return resp;
+  }
+
+  private addMissedRouteHandler() {
+    this.express.use('/', (req: any, res: any, next: any) => {
+      const response = this.handleUnmocked(req);
+      res.send(response);
+    });
+  }
+
+  private handleUnmocked(req: any): any {
+    console.log('This URL is not mocked, TODO: forward it');
+    // TODO: Log an unmocked request
+
+    // TODO: return a forwarded response from the real API server
+    return 'Hello world';
   }
 }
 
