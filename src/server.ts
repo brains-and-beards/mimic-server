@@ -2,51 +2,87 @@
 /* tslint:disable:no-console */
 import commander from 'commander';
 import fs from 'fs';
-import app from './app';
+import { normalize } from 'normalizr';
+import { promisify } from 'util';
+
+import App from './app';
+import { ConfigSchema } from './Models/DataSchema';
 
 commander.option('-c, --config <path>', 'Path to config file').parse(process.argv);
 
 class Server {
-  port = process.env.PORT || 3000;
+  readFileAsync = promisify(fs.readFile);
+  configFilePath: string;
+  app?: App;
 
-  readFile = (configPath: string) => {
-    console.log('Reading: ' + configPath);
-    fs.readFile(configPath, { encoding: 'utf-8' }, (error, data) => {
-      if (!error) {
-        console.log('Received: ' + data);
-        const json = JSON.parse(data);
-        console.log('json test: ' + json.test);
-      } else {
-        console.error(error);
-      }
-    });
-  };
+  constructor() {
+    const { config } = commander;
+    if (!config) {
+      this.configFilePath = './apimocker.json';
+    } else {
+      this.configFilePath = config;
+    }
+    console.log('Reading config file from: ' + this.configFilePath);
+  }
+
+  async readFile(configPath: string) {
+    const data = await this.readFileAsync(configPath, { encoding: 'utf-8' });
+    return JSON.parse(data);
+  }
 
   watchConfigForChanges = (configPath: string) => {
     fs.watchFile(configPath, () => {
+      console.log('-----------------------------------------');
       console.log(configPath + ' changed');
-      this.readFile(configPath);
+      this.readAndStart();
     });
+  };
+
+  parseConfig = (configData: any): IConfig => {
+    const normalizedData = normalize(configData, ConfigSchema);
+    return normalizedData as IConfig;
+  };
+
+  readAndStart = () => {
+    this.readFile(this.configFilePath)
+      .then(json => {
+        const config = this.parseConfig(json);
+        this.startServer(config);
+      })
+      .catch(error => {
+        console.error(error);
+      });
   };
 
   run = () => {
     console.log('Starting run');
-    let { config } = commander;
-    if (config) {
-      console.log('Reading config file from: ' + config);
-    } else {
-      config = './apimocker.json';
-    }
-    console.log(config);
-    this.readFile(config);
-    this.watchConfigForChanges(config);
+    this.watchConfigForChanges(this.configFilePath);
+    this.readAndStart();
+  };
 
-    app.listen(this.port, (err: any) => {
-      if (err) {
-        return console.log(err);
+  startServer = (config: IConfig) => {
+    if (this.app && this.app.isListening()) {
+      this.app.stop(error => {
+        if (error) {
+          console.error(error);
+        } else {
+          console.log('close');
+          this._startServer(config);
+        }
+      });
+    } else {
+      this._startServer(config);
+    }
+  };
+
+  private _startServer = (config: IConfig) => {
+    this.app = new App(config);
+    this.app.start(error => {
+      if (error) {
+        return console.error(error);
       }
 
-      return console.log(`server is listening on ${this.port}`);
+      return console.log(`server is listening`);
     });
   };
 }

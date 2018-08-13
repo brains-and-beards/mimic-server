@@ -3,21 +3,24 @@
   "version": "0.0.1",
   "description": "APIMocker Server",
   "scripts": {
-    "start": "npm run serve",
-    "build": "npm run build-ts && npm run tslint",
+    "start": "yarn run serve",
+    "build": "yarn run build-ts && yarn run tslint",
     "serve": "node dist/server.js",
     "watch-node": "nodemon dist/server.js",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run watch-node\"",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
     "test": "jest --forceExit --coverage --verbose",
-    "watch-test": "npm run test -- --watchAll",
+    "watch-test": "yarn run test -- --watchAll",
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
-    "debug": "npm run build && npm run watch-debug",
+    "debug": "yarn run build && yarn run watch-debug",
     "serve-debug": "nodemon --inspect dist/server.js",
-    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"npm run watch-ts\" \"npm run serve-debug\""
+    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\"",
+    "check-all": "yarn tslint && yarn build-ts && yarn test"
   },
-  "bin": { "apimocker_server": "./dist/server.js"},
+  "bin": {
+    "apimocker_server": "./dist/server.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@gitlab.com/brainsandbeards/APIMockerServer.git"
@@ -43,7 +46,11 @@
     "typescript": "^2.9.2"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.116",
+    "@types/normalizr": "^2.0.18",
     "commander": "^2.16.0",
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "lodash": "^4.17.10",
+    "normalizr": "^3.2.4"
   }
 }
