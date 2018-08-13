@@ -42,13 +42,24 @@ class App {
     this.addMissedRouteHandler();
   }
 
+  private getAppropriateListenerFunction(method: string): express.IRouterMatcher<express.Express> {
+    if (method === 'delete') return this.express.get;
+    if (method === 'get') return this.express.get;
+    if (method === 'patch') return this.express.get;
+    if (method === 'post') return this.express.get;
+    if (method === 'put') return this.express.get;
+
+    throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
+  }
+
   private register(endpoint: IEndpoint, scope = ''): void {
     const path = '/' + scope + endpoint.path;
     const method = endpoint.method.toLowerCase();
     const statusCode = endpoint.statusCode || 200;
     const timeout = endpoint.timeout || 0;
 
-    this.express[method](path, (req: any, res: any) => {
+    const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
+    httpMethodListenerFunction(path, (req: any, res: any) => {
       const response = this.substituteParams(endpoint.response, req.params);
 
       if (timeout > 0) {
@@ -76,7 +87,7 @@ class App {
   private addMissedRouteHandler() {
     this.express.use('/', (req: any, res: any, next: any) => {
       const response = this.handleUnmocked(req);
-      res.send(response);
+      res.status(404).send(response);
     });
   }
 
@@ -85,7 +96,7 @@ class App {
     // TODO: Log an unmocked request
 
     // TODO: return a forwarded response from the real API server
-    return 'Hello world';
+    return 'TODO: get a response from the origin API';
   }
 }
 
