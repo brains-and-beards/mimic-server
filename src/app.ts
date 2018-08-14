@@ -43,11 +43,11 @@ class App {
   }
 
   private getAppropriateListenerFunction(method: string): express.IRouterMatcher<express.Express> {
-    if (method === 'delete') return this.express.get;
-    if (method === 'get') return this.express.get;
-    if (method === 'patch') return this.express.get;
-    if (method === 'post') return this.express.get;
-    if (method === 'put') return this.express.get;
+    if (method === 'delete') return this.express.get.bind(this.express);
+    if (method === 'get') return this.express.get.bind(this.express);
+    if (method === 'patch') return this.express.get.bind(this.express);
+    if (method === 'post') return this.express.get.bind(this.express);
+    if (method === 'put') return this.express.get.bind(this.express);
 
     throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
   }
