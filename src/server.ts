@@ -1,6 +1,4 @@
-#!/usr/bin/env node
 /* tslint:disable:no-console */
-import commander from 'commander';
 import fs from 'fs';
 import { normalize } from 'normalizr';
 import { promisify } from 'util';
@@ -8,19 +6,16 @@ import { promisify } from 'util';
 import App from './app';
 import { ConfigSchema } from './Models/DataSchema';
 
-commander.option('-c, --config <path>', 'Path to config file').parse(process.argv);
-
 class Server {
   readFileAsync = promisify(fs.readFile);
   configFilePath: string;
   app?: App;
 
-  constructor() {
-    const { config } = commander;
-    if (!config) {
+  constructor(filename: string) {
+    if (!filename) {
       this.configFilePath = './apimocker.json';
     } else {
-      this.configFilePath = config;
+      this.configFilePath = filename;
     }
     console.log('Reading config file from: ' + this.configFilePath);
   }
@@ -87,5 +82,4 @@ class Server {
   };
 }
 
-const server = new Server();
-server.run();
+export default Server;
