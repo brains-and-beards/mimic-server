@@ -20,12 +20,18 @@ class Server {
     console.log('Reading config file from: ' + this.configFilePath);
   }
 
-  async readFile(configPath: string) {
+  run = () => {
+    console.log('Starting run');
+    this.watchConfigForChanges(this.configFilePath);
+    this.readAndStart();
+  };
+
+  private async readFile(configPath: string) {
     const data = await this.readFileAsync(configPath, { encoding: 'utf-8' });
     return JSON.parse(data);
   }
 
-  watchConfigForChanges = (configPath: string) => {
+  private watchConfigForChanges = (configPath: string) => {
     fs.watchFile(configPath, () => {
       console.log('-----------------------------------------');
       console.log(configPath + ' changed');
@@ -33,12 +39,12 @@ class Server {
     });
   };
 
-  parseConfig = (configData: any): IConfig => {
+  private parseConfig = (configData: any): IConfig => {
     const normalizedData = normalize(configData, ConfigSchema);
     return normalizedData as IConfig;
   };
 
-  readAndStart = () => {
+  private readAndStart = () => {
     this.readFile(this.configFilePath)
       .then(json => {
         const config = this.parseConfig(json);
@@ -49,13 +55,7 @@ class Server {
       });
   };
 
-  run = () => {
-    console.log('Starting run');
-    this.watchConfigForChanges(this.configFilePath);
-    this.readAndStart();
-  };
-
-  startServer = (config: IConfig) => {
+  private startServer = (config: IConfig) => {
     if (this.app && this.app.isListening()) {
       this.app.stop(error => {
         if (error) {
