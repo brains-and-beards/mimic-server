@@ -97,7 +97,7 @@ class App {
     const timeout = endpoint.timeout || 0;
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
-    httpMethodListenerFunction(path, (req: any, res: any) => {
+    httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const response = this.substituteParams(endpoint.response, req.params);
 
       if (timeout > 0) {
@@ -123,18 +123,31 @@ class App {
   }
 
   private addMissedRouteHandler() {
-    this.express.use('/', (req: any, res: any, next: any) => {
+    this.express.use('/', (req: express.Request, res: any, next: any) => {
       const response = this.handleUnmocked(req);
       res.status(404).send(response);
     });
   }
 
-  private handleUnmocked(req: any): any {
-    console.log('This URL is not mocked, TODO: forward it');
+  private handleUnmocked(req: express.Request): any {
     // TODO: Log an unmocked request
 
-    // TODO: return a forwarded response from the real API server
-    return 'TODO: get a response from the origin API';
+    const response = this.forwardRequest(req);
+    return response;
+  }
+
+  private getFallbackURL(req: express.Request) {
+    const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
+    const project = _.find(this.config.entities.projects, project => project.name === projectName);
+    const { domain, path, port } = project.fallbackUrlPrefix;
+
+    const url = `http://${domain}:${port}${path}/${localPath.join()}`;
+    console.log('Falback URL found: ', url);
+    return url;
+  }
+
+  private forwardRequest(req: express.Request) {
+    const url = this.getFallbackURL(req);
   }
 }
 
