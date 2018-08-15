@@ -3,6 +3,7 @@ import express from 'express';
 import HTTP from 'http';
 import _ from 'lodash';
 import { socket } from 'zeromq';
+import request from 'request';
 
 export const enum MessageTypes {
   STOP,
@@ -124,15 +125,14 @@ class App {
 
   private addMissedRouteHandler() {
     this.express.use('/', (req: express.Request, res: any, next: any) => {
-      const response = this.handleUnmocked(req);
-      res.status(404).send(response);
+      const response = this.handleUnmocked(req, res);
     });
   }
 
-  private handleUnmocked(req: express.Request): any {
+  private handleUnmocked(req: express.Request, responseStream: express.Response): any {
     // TODO: Log an unmocked request
 
-    const response = this.forwardRequest(req);
+    const response = this.forwardRequest(req, responseStream);
     return response;
   }
 
@@ -146,8 +146,14 @@ class App {
     return url;
   }
 
-  private forwardRequest(req: express.Request) {
+  private forwardRequest(req: express.Request, responseStream: express.Response) {
     const url = this.getFallbackURL(req);
+    // TODO: things to forward:
+    //   method,
+    //   headers: {
+    //   options.body = JSON.stringify(params);
+
+    request.get(url).pipe(responseStream);
   }
 }
 
