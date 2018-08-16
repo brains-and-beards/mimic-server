@@ -2,12 +2,14 @@
 import express from 'express';
 import HTTP from 'http';
 import _ from 'lodash';
+import { socket } from 'zeromq';
 
 class App {
   port = process.env.PORT || 3000; // TODO: get port from the config file
   private express: express.Express;
   private config: IConfig;
   private httpServer?: HTTP.Server;
+  private socket: any;
 
   constructor(config: IConfig) {
     this.config = config;
@@ -28,9 +30,25 @@ class App {
   };
 
   start = (callback: ((error: Error) => void)) => {
+    this.socket = socket('pull');
+    this.socket.connect('ipc://server_commands.ipc');
+
+    this.socket.on('message', this.handleUIMessage);
+
     this.httpServer = this.express.listen(this.port, (error: Error) => {
       callback(error);
     });
+  };
+
+  private handleUIMessage = (message: string) => {
+    switch (message) {
+      case 'STOP':
+        return this.stop(this.handleError);
+    }
+  };
+
+  private handleError = (error: Error) => {
+    // Send the error message back to UI
   };
 
   private mountRoutes(): void {
