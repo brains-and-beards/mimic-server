@@ -1,6 +1,4 @@
-#!/usr/bin/env node
 /* tslint:disable:no-console */
-import commander from 'commander';
 import fs from 'fs';
 import { normalize } from 'normalizr';
 import { promisify } from 'util';
@@ -8,29 +6,32 @@ import { promisify } from 'util';
 import App from './app';
 import { ConfigSchema } from './Models/DataSchema';
 
-commander.option('-c, --config <path>', 'Path to config file').parse(process.argv);
-
 class Server {
   readFileAsync = promisify(fs.readFile);
   configFilePath: string;
   app?: App;
 
-  constructor() {
-    const { config } = commander;
-    if (!config) {
+  constructor(filename: string) {
+    if (!filename) {
       this.configFilePath = './apimocker.json';
     } else {
-      this.configFilePath = config;
+      this.configFilePath = filename;
     }
     console.log('Reading config file from: ' + this.configFilePath);
   }
 
-  async readFile(configPath: string) {
+  run = () => {
+    console.log('Starting run');
+    this.watchConfigForChanges(this.configFilePath);
+    this.readAndStart();
+  };
+
+  private async readFile(configPath: string) {
     const data = await this.readFileAsync(configPath, { encoding: 'utf-8' });
     return JSON.parse(data);
   }
 
-  watchConfigForChanges = (configPath: string) => {
+  private watchConfigForChanges = (configPath: string) => {
     fs.watchFile(configPath, () => {
       console.log('-----------------------------------------');
       console.log(configPath + ' changed');
@@ -38,12 +39,12 @@ class Server {
     });
   };
 
-  parseConfig = (configData: any): IConfig => {
+  private parseConfig = (configData: any): IConfig => {
     const normalizedData = normalize(configData, ConfigSchema);
     return normalizedData as IConfig;
   };
 
-  readAndStart = () => {
+  private readAndStart = () => {
     this.readFile(this.configFilePath)
       .then(json => {
         const config = this.parseConfig(json);
@@ -54,13 +55,7 @@ class Server {
       });
   };
 
-  run = () => {
-    console.log('Starting run');
-    this.watchConfigForChanges(this.configFilePath);
-    this.readAndStart();
-  };
-
-  startServer = (config: IConfig) => {
+  private startServer = (config: IConfig) => {
     if (this.app && this.app.isListening()) {
       this.app.stop(error => {
         if (error) {
@@ -87,5 +82,4 @@ class Server {
   };
 }
 
-const server = new Server();
-server.run();
+export default Server;

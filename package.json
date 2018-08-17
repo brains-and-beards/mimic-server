@@ -5,8 +5,8 @@
   "scripts": {
     "start": "yarn run serve",
     "build": "yarn run build-ts && yarn run tslint",
-    "serve": "node dist/server.js",
-    "watch-node": "nodemon dist/server.js",
+    "serve": "node dist/runner.js",
+    "watch-node": "nodemon dist/runner.js",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
     "test": "jest --forceExit --coverage --verbose",
     "watch-test": "yarn run test -- --watchAll",
@@ -14,12 +14,12 @@
     "watch-ts": "tsc -w",
     "tslint": "tslint -c tslint.json -p tsconfig.json",
     "debug": "yarn run build && yarn run watch-debug",
-    "serve-debug": "nodemon --inspect dist/server.js",
+    "serve-debug": "nodemon --inspect dist/runner.js",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\"",
     "check-all": "yarn tslint && yarn build-ts && yarn test"
   },
   "bin": {
-    "apimocker_server": "./dist/server.js"
+    "apimocker_server": "./dist/runner.js"
   },
   "repository": {
     "type": "git",
