@@ -4,6 +4,11 @@ import HTTP from 'http';
 import _ from 'lodash';
 import { socket } from 'zeromq';
 
+export const enum MessageTypes {
+  STOP,
+  RESTART,
+}
+
 class App {
   port = process.env.PORT || 3000; // TODO: get port from the config file
   private express: express.Express;
