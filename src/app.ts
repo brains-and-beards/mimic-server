@@ -44,10 +44,24 @@ class App {
     });
   };
 
-  private handleUIMessage = (message: string) => {
-    switch (message) {
-      case 'STOP':
+  restart = (callback: ((error: Error) => void)) => {
+    if (this.httpServer) this.stop(() => this.start(this.handleError));
+    else this.start(this.handleError);
+  };
+
+  private handleUIMessage = (message: Uint8Array) => {
+    const messageCode = Number(String.fromCharCode.apply(message));
+
+    switch (messageCode) {
+      case MessageTypes.STOP:
+        console.log('[Server] STOPPING.');
+        this.socket.send(MessageTypes.STOP);
         return this.stop(this.handleError);
+      case MessageTypes.RESTART:
+        console.log('[Server] RESTARTING.');
+        this.socket.send(MessageTypes.RESTART);
+        return this.restart(this.handleError);
+      default:
     }
   };
 
