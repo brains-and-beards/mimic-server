@@ -20,6 +20,10 @@ class App {
     this.config = config;
     this.express = express();
     this.mountRoutes();
+
+    this.socket = socket('rep');
+    this.socket.connect('ipc://server_commands.ipc');
+    this.socket.on('message', this.handleUIMessage);
   }
 
   isListening = (): boolean => {
@@ -35,11 +39,6 @@ class App {
   };
 
   start = (callback: ((error: Error) => void)) => {
-    this.socket = socket('pull');
-    this.socket.connect('ipc://server_commands.ipc');
-
-    this.socket.on('message', this.handleUIMessage);
-
     this.httpServer = this.express.listen(this.port, (error: Error) => {
       callback(error);
     });
