@@ -33,6 +33,7 @@ class App {
   stop = (callback: ((error: Error) => void)) => {
     if (this.httpServer) {
       this.httpServer.close((error: Error) => {
+        if (!error) this.socket.send(MessageTypes.STOP);
         callback(error);
       });
     }
@@ -40,6 +41,7 @@ class App {
 
   start = (callback: ((error: Error) => void)) => {
     this.httpServer = this.express.listen(this.port, (error: Error) => {
+      if (!error) this.socket.send(MessageTypes.RESTART);
       callback(error);
     });
   };
@@ -55,11 +57,9 @@ class App {
     switch (messageCode) {
       case MessageTypes.STOP:
         console.log('[Server] STOPPING.');
-        this.socket.send(MessageTypes.STOP);
         return this.stop(this.handleError);
       case MessageTypes.RESTART:
         console.log('[Server] RESTARTING.');
-        this.socket.send(MessageTypes.RESTART);
         return this.restart(this.handleError);
       default:
     }
