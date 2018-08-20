@@ -52,14 +52,13 @@ class App {
   };
 
   private handleUIMessage = (message: Uint8Array) => {
-    const messageCode = Number(String.fromCharCode.apply(message));
+    const messageCode = Number(message.toString());
+    console.log('Received message', message, messageCode);
 
     switch (messageCode) {
       case MessageTypes.STOP:
-        console.log('[Server] STOPPING.');
         return this.stop(this.handleError);
       case MessageTypes.RESTART:
-        console.log('[Server] RESTARTING.');
         return this.restart(this.handleError);
       default:
     }
