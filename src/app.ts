@@ -7,6 +7,7 @@ import { socket } from 'zeromq';
 export const enum MessageTypes {
   STOP,
   RESTART,
+  ERROR,
 }
 
 class App {
@@ -65,7 +66,9 @@ class App {
   };
 
   private handleError = (error: Error) => {
-    // Send the error message back to UI
+    if (!error) return;
+    console.log('Sending error', error);
+    this.socket.send(`${MessageTypes.ERROR}${error}`);
   };
 
   private mountRoutes(): void {
