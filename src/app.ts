@@ -2,17 +2,29 @@
 import express from 'express';
 import HTTP from 'http';
 import _ from 'lodash';
+import { socket } from 'zeromq';
+
+export const enum MessageTypes {
+  STOP,
+  RESTART,
+  ERROR,
+}
 
 class App {
   port = process.env.PORT || 3000; // TODO: get port from the config file
   private express: express.Express;
   private config: IConfig;
   private httpServer?: HTTP.Server;
+  private socket: any;
 
   constructor(config: IConfig) {
     this.config = config;
     this.express = express();
     this.mountRoutes();
+
+    this.socket = socket('rep');
+    this.socket.connect('ipc://server_commands.ipc');
+    this.socket.on('message', this.handleUIMessage);
   }
 
   isListening = (): boolean => {
@@ -22,6 +34,7 @@ class App {
   stop = (callback: ((error: Error) => void)) => {
     if (this.httpServer) {
       this.httpServer.close((error: Error) => {
+        if (!error) this.socket.send(MessageTypes.STOP);
         callback(error);
       });
     }
@@ -29,8 +42,33 @@ class App {
 
   start = (callback: ((error: Error) => void)) => {
     this.httpServer = this.express.listen(this.port, (error: Error) => {
+      if (!error) this.socket.send(MessageTypes.RESTART);
       callback(error);
     });
+  };
+
+  restart = (callback: ((error: Error) => void)) => {
+    if (this.httpServer) this.stop(() => this.start(this.handleError));
+    else this.start(this.handleError);
+  };
+
+  private handleUIMessage = (message: Uint8Array) => {
+    const messageCode = Number(message.toString());
+    console.log('Received message', message, messageCode);
+
+    switch (messageCode) {
+      case MessageTypes.STOP:
+        return this.stop(this.handleError);
+      case MessageTypes.RESTART:
+        return this.restart(this.handleError);
+      default:
+    }
+  };
+
+  private handleError = (error: Error) => {
+    if (!error) return;
+    console.log('Sending error', error);
+    this.socket.send(`${MessageTypes.ERROR}${error}`);
   };
 
   private mountRoutes(): void {
