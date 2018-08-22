@@ -20,7 +20,8 @@ const DataSchema_1 = require("./Models/DataSchema");
 class Server {
     constructor(filename) {
         this.readFileAsync = util_1.promisify(fs_1.default.readFile);
-        this.run = () => {
+        this.run = (wait = false) => {
+            this.wait = wait;
             console.log('Starting run');
             this.watchConfigForChanges(this.configFilePath);
             this.readAndStart();
@@ -64,12 +65,13 @@ class Server {
         };
         this._startServer = (config) => {
             this.app = new app_1.default(config);
-            this.app.start(error => {
-                if (error) {
-                    return console.error(error);
-                }
-                return console.log(`server is listening`);
-            });
+            if (!this.wait)
+                this.app.start(error => {
+                    if (error) {
+                        return console.error(error);
+                    }
+                    return console.log(`server is listening`);
+                });
         };
         if (!filename) {
             this.configFilePath = './apimocker.json';

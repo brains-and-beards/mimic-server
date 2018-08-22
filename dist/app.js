@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /* tslint:disable:no-console */
 const express_1 = __importDefault(require("express"));
 const lodash_1 = __importDefault(require("lodash"));
+const zeromq_1 = require("zeromq");
 class App {
     constructor(config) {
         this.port = process.env.PORT || 3000; // TODO: get port from the config file
@@ -15,18 +16,48 @@ class App {
         this.stop = (callback) => {
             if (this.httpServer) {
                 this.httpServer.close((error) => {
+                    if (!error)
+                        this.socket.send(0 /* STOP */);
                     callback(error);
                 });
             }
         };
         this.start = (callback) => {
             this.httpServer = this.express.listen(this.port, (error) => {
+                if (!error)
+                    this.socket.send(1 /* RESTART */);
                 callback(error);
             });
+        };
+        this.restart = (callback) => {
+            if (this.httpServer)
+                this.stop(() => this.start(this.handleError));
+            else
+                this.start(this.handleError);
+        };
+        this.handleUIMessage = (message) => {
+            const messageCode = Number(message.toString());
+            console.log('Received message', message, messageCode);
+            switch (messageCode) {
+                case 0 /* STOP */:
+                    return this.stop(this.handleError);
+                case 1 /* RESTART */:
+                    return this.restart(this.handleError);
+                default:
+            }
+        };
+        this.handleError = (error) => {
+            if (!error)
+                return;
+            console.log('Sending error', error);
+            this.socket.send(`${2 /* ERROR */}${error}`);
         };
         this.config = config;
         this.express = express_1.default();
         this.mountRoutes();
+        this.socket = zeromq_1.socket('rep');
+        this.socket.connect('ipc://server_commands.ipc');
+        this.socket.on('message', this.handleUIMessage);
     }
     mountRoutes() {
         const { endpoints, projects } = this.config.entities;
