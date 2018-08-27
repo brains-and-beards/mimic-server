@@ -133,9 +133,8 @@ class App {
 
   private getForwardingOptions(req: express.Request) {
     const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
-    const project = _.find(this.config.entities.projects, project => project.name === projectName);
+    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
     const { domain, path, port } = project.fallbackUrlPrefix;
-
 
     return {
       headers: { ...req.headers, host: domain },
@@ -149,7 +148,7 @@ class App {
     const options = this.getForwardingOptions(req);
 
     request(options)
-      .on('response', function(response) {
+      .on('response', response => {
         // TODO Log the response
       })
       .pipe(responseStream);
