@@ -5,8 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 /* tslint:disable:no-console */
 const express_1 = __importDefault(require("express"));
+const body_parser_1 = __importDefault(require("body-parser"));
 const lodash_1 = __importDefault(require("lodash"));
 const zeromq_1 = require("zeromq");
+const request_1 = __importDefault(require("request"));
 class App {
     constructor(config) {
         this.port = process.env.PORT || 3000; // TODO: get port from the config file
@@ -54,6 +56,7 @@ class App {
         };
         this.config = config;
         this.express = express_1.default();
+        this.express.use(body_parser_1.default.raw({ type: '*/*' }));
         this.mountRoutes();
         this.socket = zeromq_1.socket('rep');
         this.socket.connect('ipc://server_commands.ipc');
@@ -112,15 +115,27 @@ class App {
     }
     addMissedRouteHandler() {
         this.express.use('/', (req, res, next) => {
-            const response = this.handleUnmocked(req);
-            res.status(404).send(response);
+            const response = this.forwardRequest(req, res);
         });
     }
-    handleUnmocked(req) {
-        console.log('This URL is not mocked, TODO: forward it');
-        // TODO: Log an unmocked request
-        // TODO: return a forwarded response from the real API server
-        return 'TODO: get a response from the origin API';
+    getForwardingOptions(req) {
+        const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
+        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+        const { domain, path, port } = project.fallbackUrlPrefix;
+        return {
+            headers: Object.assign({}, req.headers, { host: domain }),
+            method: req.method,
+            body: req.body,
+            url: `http://${domain}:${port}${path}/${localPath.join('/')}`,
+        };
+    }
+    forwardRequest(req, responseStream) {
+        const options = this.getForwardingOptions(req);
+        request_1.default(options)
+            .on('response', response => {
+            // TODO Log the response
+        })
+            .pipe(responseStream);
     }
 }
 exports.default = App;
