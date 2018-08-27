@@ -1,5 +1,6 @@
 /* tslint:disable:no-console */
 import express from 'express';
+import bodyParser from 'body-parser';
 import HTTP from 'http';
 import _ from 'lodash';
 import { socket } from 'zeromq';
@@ -21,6 +22,7 @@ class App {
   constructor(config: IConfig) {
     this.config = config;
     this.express = express();
+    this.express.use(bodyParser.raw({ type: '*/*' }));
     this.mountRoutes();
 
     this.socket = socket('rep');
@@ -125,35 +127,32 @@ class App {
 
   private addMissedRouteHandler() {
     this.express.use('/', (req: express.Request, res: any, next: any) => {
-      const response = this.handleUnmocked(req, res);
+      const response = this.forwardRequest(req, res);
     });
   }
 
-  private handleUnmocked(req: express.Request, responseStream: express.Response): any {
-    // TODO: Log an unmocked request
-
-    const response = this.forwardRequest(req, responseStream);
-    return response;
-  }
-
-  private getFallbackURL(req: express.Request) {
+  private getForwardingOptions(req: express.Request) {
     const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
     const project = _.find(this.config.entities.projects, project => project.name === projectName);
     const { domain, path, port } = project.fallbackUrlPrefix;
 
-    const url = `http://${domain}:${port}${path}/${localPath.join()}`;
-    console.log('Falback URL found: ', url);
-    return url;
+
+    return {
+      headers: { ...req.headers, host: domain },
+      method: req.method,
+      body: req.body,
+      url: `http://${domain}:${port}${path}/${localPath.join('/')}`,
+    };
   }
 
   private forwardRequest(req: express.Request, responseStream: express.Response) {
-    const url = this.getFallbackURL(req);
-    // TODO: things to forward:
-    //   method,
-    //   headers: {
-    //   options.body = JSON.stringify(params);
+    const options = this.getForwardingOptions(req);
 
-    request.get(url).pipe(responseStream);
+    request(options)
+      .on('response', function(response) {
+        // TODO Log the response
+      })
+      .pipe(responseStream);
   }
 }
 
