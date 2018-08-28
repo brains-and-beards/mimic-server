@@ -1,10 +1,12 @@
 /* tslint:disable:no-console */
 import express from 'express';
+import bodyParser from 'body-parser';
 import HTTP from 'http';
 import HTTPS from 'https';
 import _ from 'lodash';
 import { socket } from 'zeromq';
 import fs from 'fs';
+import request from 'request';
 
 export const enum MessageTypes {
   STOP,
@@ -29,6 +31,7 @@ class App {
     this.sslPort = httpsPort || 3001;
 
     this.express = express();
+    this.express.use(bodyParser.raw({ type: '*/*' }));
     this.mountRoutes();
 
     this.socket = socket('rep');
@@ -117,7 +120,7 @@ class App {
     const timeout = endpoint.timeout || 0;
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
-    httpMethodListenerFunction(path, (req: any, res: any) => {
+    httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const response = this.substituteParams(endpoint.response, req.params);
 
       if (timeout > 0) {
@@ -143,18 +146,32 @@ class App {
   }
 
   private addMissedRouteHandler() {
-    this.express.use('/', (req: any, res: any, next: any) => {
-      const response = this.handleUnmocked(req);
-      res.status(404).send(response);
+    this.express.use('/', (req: express.Request, res: any, next: any) => {
+      const response = this.forwardRequest(req, res);
     });
   }
 
-  private handleUnmocked(req: any): any {
-    console.log('This URL is not mocked, TODO: forward it');
-    // TODO: Log an unmocked request
+  private getForwardingOptions(req: express.Request) {
+    const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
+    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+    const { domain, path, port } = project.fallbackUrlPrefix;
 
-    // TODO: return a forwarded response from the real API server
-    return 'TODO: get a response from the origin API';
+    return {
+      headers: { ...req.headers, host: domain },
+      method: req.method,
+      body: req.body,
+      url: `http://${domain}:${port}${path}/${localPath.join('/')}`,
+    };
+  }
+
+  private forwardRequest(req: express.Request, responseStream: express.Response) {
+    const options = this.getForwardingOptions(req);
+
+    request(options)
+      .on('response', response => {
+        // TODO Log the response
+      })
+      .pipe(responseStream);
   }
 }
 
