@@ -20,7 +20,8 @@
     "generate-cert": "./utils/generate-cert.sh"
   },
   "bin": {
-    "apimocker_server": "./dist/runner.js"
+    "apimocker_server": "./dist/runner.js",
+    "generate-cert": "./utils/generate-cert.sh"
   },
   "repository": {
     "type": "git",
