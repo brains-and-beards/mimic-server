@@ -3,11 +3,33 @@ import express from 'express';
 import HTTP from 'http';
 import _ from 'lodash';
 import { socket } from 'zeromq';
+import moment from 'moment';
 
 export const enum MessageTypes {
   STOP,
   RESTART,
   ERROR,
+  LOG,
+}
+
+export const enum LogTypes {
+  SERVER,
+  REQUEST,
+}
+
+interface ILog {
+  readonly body?: any;
+  readonly date?: string;
+  readonly matched?: boolean;
+  readonly method?: string;
+  readonly path?: string;
+  readonly protocol?: string;
+  readonly host?: string;
+  readonly port?: number;
+  readonly statusCode?: number;
+  readonly query?: any;
+  readonly type: LogTypes;
+  readonly message?: string;
 }
 
 class App {
@@ -16,6 +38,7 @@ class App {
   private config: IConfig;
   private httpServer?: HTTP.Server;
   private socket: any;
+  private socketLogs: any;
 
   constructor(config: IConfig) {
     this.config = config;
@@ -24,6 +47,9 @@ class App {
 
     this.socket = socket('rep');
     this.socket.connect('ipc://server_commands.ipc');
+    this.socketLogs = socket('req');
+    this.socketLogs.connect('ipc://logs.ips');
+    this.socketLogs.on('message', this.handleUIMessageLogs);
     this.socket.on('message', this.handleUIMessage);
   }
 
@@ -34,7 +60,16 @@ class App {
   stop = (callback: ((error: Error) => void)) => {
     if (this.httpServer) {
       this.httpServer.close((error: Error) => {
-        if (!error) this.socket.send(MessageTypes.STOP);
+        if (!error) {
+          const logObject: ILog = {
+            type: LogTypes.SERVER,
+            message: 'STOP',
+            date: moment().format('YYYY/MM/DD HH:mm:ss'),
+            matched: true, // TODO: Do we need this field?
+          };
+          this.socketLogs.send(JSON.stringify(logObject));
+          this.socket.send(MessageTypes.STOP);
+        }
         callback(error);
       });
     }
@@ -42,12 +77,23 @@ class App {
 
   start = (callback: ((error: Error) => void)) => {
     this.httpServer = this.express.listen(this.port, (error: Error) => {
-      if (!error) this.socket.send(MessageTypes.RESTART);
+      console.log('​App -> start -> this.port', this.port);
+      if (!error) {
+        const logObject: ILog = {
+          type: LogTypes.SERVER,
+          message: 'RESTART',
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+          matched: true, // TODO: Do we need this field?
+        };
+        this.socketLogs.send(JSON.stringify(logObject));
+        this.socket.send(MessageTypes.RESTART);
+      }
       callback(error);
     });
   };
 
   restart = (callback: ((error: Error) => void)) => {
+    console.log('​App -> restart -> restart', 'restart');
     if (this.httpServer) this.stop(() => this.start(this.handleError));
     else this.start(this.handleError);
   };
@@ -65,10 +111,20 @@ class App {
     }
   };
 
+  // tslint:disable-next-line:no-empty
+  private handleUIMessageLogs = (message: Uint8Array) => {};
+
   private handleError = (error: Error) => {
     if (!error) return;
     console.log('Sending error', error);
     this.socket.send(`${MessageTypes.ERROR}${error}`);
+    const logObject: ILog = {
+      type: LogTypes.SERVER,
+      message: `ERROR ${error}`,
+      matched: true, // TODO: Do we need this field?
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
+    };
+    this.socketLogs.send(JSON.stringify(logObject));
   };
 
   private mountRoutes(): void {
@@ -81,6 +137,7 @@ class App {
   }
 
   private getAppropriateListenerFunction(method: string): express.IRouterMatcher<express.Express> {
+    console.log('​App -> method', method);
     if (method === 'delete') return this.express.get.bind(this.express);
     if (method === 'get') return this.express.get.bind(this.express);
     if (method === 'patch') return this.express.get.bind(this.express);
@@ -99,6 +156,7 @@ class App {
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: any, res: any) => {
       const response = this.substituteParams(endpoint.response, req.params);
+      console.log('​App -> response', response);
 
       if (timeout > 0) {
         setTimeout(() => res.status(statusCode).send(response), timeout);
@@ -109,6 +167,7 @@ class App {
   }
 
   private substituteParams(resp: any, params: any): any {
+    console.log('​App -> resp', resp);
     for (const i in resp) {
       // Check nested objects recursively
       if (typeof resp[i] === 'object') {
@@ -124,15 +183,30 @@ class App {
 
   private addMissedRouteHandler() {
     this.express.use('/', (req: any, res: any, next: any) => {
-      const response = this.handleUnmocked(req);
+      const statusCode = 404; // TODO: Change it
+
+      const logObject: ILog = {
+        method: req.method,
+        path: req.path,
+        body: req.body,
+        matched: true, // TODO: Do we need this field?
+        protocol: req.protocol,
+        host: req.hostname,
+        date: moment().format('YYYY/MM/DD HH:mm:ss'),
+        port: parseInt(this.port.toString(), 10),
+        statusCode,
+        query: req.query,
+        type: LogTypes.REQUEST,
+      };
+
+      const response = this.handleUnmocked(req, logObject);
       res.status(404).send(response);
     });
   }
 
-  private handleUnmocked(req: any): any {
-    console.log('This URL is not mocked, TODO: forward it');
+  private handleUnmocked(req: any, log: ILog): any {
     // TODO: Log an unmocked request
-
+    this.socketLogs.send(JSON.stringify(log));
     // TODO: return a forwarded response from the real API server
     return 'TODO: get a response from the origin API';
   }
