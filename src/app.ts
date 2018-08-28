@@ -1,8 +1,10 @@
 /* tslint:disable:no-console */
 import express from 'express';
 import HTTP from 'http';
+import HTTPS from 'https';
 import _ from 'lodash';
 import { socket } from 'zeromq';
+import fs from 'fs';
 
 export const enum MessageTypes {
   STOP,
@@ -16,6 +18,7 @@ class App {
   private express: express.Express;
   private config: IConfig;
   private httpServer?: HTTP.Server;
+  private sslServer?: HTTPS.Server;
   private socket: any;
 
   constructor(config: IConfig) {
@@ -38,23 +41,32 @@ class App {
   };
 
   stop = (callback: ((error: Error) => void)) => {
-    if (this.httpServer) {
-      this.httpServer.close((error: Error) => {
-        if (!error) this.socket.send(MessageTypes.STOP);
-        callback(error);
-      });
-    }
+    const afterStop = (error: Error) => {
+      if (!error) this.socket.send(MessageTypes.STOP);
+      callback(error);
+    };
+
+    if (this.httpServer) this.httpServer.close(afterStop);
+    if (this.sslServer) this.sslServer.close(afterStop);
   };
 
   start = (callback: ((error: Error) => void)) => {
-    this.httpServer = this.express.listen(this.port, (error: Error) => {
+    const afterStart = (error: Error) => {
       if (!error) this.socket.send(MessageTypes.RESTART);
       callback(error);
-    });
+    };
+
+    const sslOptions = {
+      key: fs.readFileSync('./localhost.key'),
+      cert: fs.readFileSync('./localhost.crt'),
+    };
+
+    this.httpServer = HTTP.createServer(this.express).listen(this.port, afterStart);
+    this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
   };
 
   restart = (callback: ((error: Error) => void)) => {
-    if (this.httpServer) this.stop(() => this.start(this.handleError));
+    if (this.httpServer || this.sslServer) this.stop(() => this.start(this.handleError));
     else this.start(this.handleError);
   };
 
