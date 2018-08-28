@@ -11,7 +11,8 @@ export const enum MessageTypes {
 }
 
 class App {
-  port = process.env.PORT || 3000; // TODO: get port from the config file
+  private port: number;
+  private sslPort: number;
   private express: express.Express;
   private config: IConfig;
   private httpServer?: HTTP.Server;
@@ -19,6 +20,11 @@ class App {
 
   constructor(config: IConfig) {
     this.config = config;
+
+    const { httpPort, httpsPort } = config.result;
+    this.port = httpPort || 3000;
+    this.sslPort = httpsPort || 3001;
+
     this.express = express();
     this.mountRoutes();
 
