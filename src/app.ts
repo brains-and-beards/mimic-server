@@ -56,13 +56,15 @@ class App {
       callback(error);
     };
 
-    const sslOptions = {
-      key: fs.readFileSync('./localhost.key'),
-      cert: fs.readFileSync('./localhost.crt'),
-    };
-
     this.httpServer = HTTP.createServer(this.express).listen(this.port, afterStart);
-    this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
+
+    if (fs.existsSync('./localhost.key') && fs.existsSync('./localhost.crt')) {
+      const sslOptions = {
+        key: fs.readFileSync('./localhost.key'),
+        cert: fs.readFileSync('./localhost.crt'),
+      };
+      this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
+    }
   };
 
   restart = (callback: ((error: Error) => void)) => {
