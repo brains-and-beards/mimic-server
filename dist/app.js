@@ -6,33 +6,45 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /* tslint:disable:no-console */
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
+const http_1 = __importDefault(require("http"));
+const https_1 = __importDefault(require("https"));
 const lodash_1 = __importDefault(require("lodash"));
 const zeromq_1 = require("zeromq");
+const fs_1 = __importDefault(require("fs"));
 const request_1 = __importDefault(require("request"));
 class App {
     constructor(config) {
-        this.port = process.env.PORT || 3000; // TODO: get port from the config file
         this.isListening = () => {
             return this.httpServer ? this.httpServer.listening : false;
         };
         this.stop = (callback) => {
-            if (this.httpServer) {
-                this.httpServer.close((error) => {
-                    if (!error)
-                        this.socket.send(0 /* STOP */);
-                    callback(error);
-                });
-            }
+            const afterStop = (error) => {
+                if (!error)
+                    this.socket.send(0 /* STOP */);
+                callback(error);
+            };
+            if (this.httpServer)
+                this.httpServer.close(afterStop);
+            if (this.sslServer)
+                this.sslServer.close(afterStop);
         };
         this.start = (callback) => {
-            this.httpServer = this.express.listen(this.port, (error) => {
+            const afterStart = (error) => {
                 if (!error)
                     this.socket.send(1 /* RESTART */);
                 callback(error);
-            });
+            };
+            this.httpServer = http_1.default.createServer(this.express).listen(this.port, afterStart);
+            if (fs_1.default.existsSync('./localhost.key') && fs_1.default.existsSync('./localhost.crt')) {
+                const sslOptions = {
+                    key: fs_1.default.readFileSync('./localhost.key'),
+                    cert: fs_1.default.readFileSync('./localhost.crt'),
+                };
+                this.sslServer = https_1.default.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
+            }
         };
         this.restart = (callback) => {
-            if (this.httpServer)
+            if (this.httpServer || this.sslServer)
                 this.stop(() => this.start(this.handleError));
             else
                 this.start(this.handleError);
@@ -55,6 +67,9 @@ class App {
             this.socket.send(`${2 /* ERROR */}${error}`);
         };
         this.config = config;
+        const { httpPort, httpsPort } = config.result;
+        this.port = httpPort || 3000;
+        this.sslPort = httpsPort || 3001;
         this.express = express_1.default();
         this.express.use(body_parser_1.default.raw({ type: '*/*' }));
         this.mountRoutes();

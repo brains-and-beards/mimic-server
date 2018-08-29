@@ -16,10 +16,12 @@
     "debug": "yarn run build && yarn run watch-debug",
     "serve-debug": "nodemon --inspect dist/runner.js",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\"",
-    "check-all": "yarn tslint && yarn build-ts && yarn test"
+    "check-all": "yarn tslint && yarn build-ts && yarn test",
+    "generate-cert": "./utils/generate-cert.sh"
   },
   "bin": {
-    "apimocker_server": "./dist/runner.js"
+    "apimocker_server": "./dist/runner.js",
+    "generate-cert": "./utils/generate-cert.sh"
   },
   "repository": {
     "type": "git",

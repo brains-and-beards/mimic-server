@@ -2,8 +2,10 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import HTTP from 'http';
+import HTTPS from 'https';
 import _ from 'lodash';
 import { socket } from 'zeromq';
+import fs from 'fs';
 import request from 'request';
 
 export const enum MessageTypes {
@@ -13,14 +15,21 @@ export const enum MessageTypes {
 }
 
 class App {
-  port = process.env.PORT || 3000; // TODO: get port from the config file
+  private port: number;
+  private sslPort: number;
   private express: express.Express;
   private config: IConfig;
   private httpServer?: HTTP.Server;
+  private sslServer?: HTTPS.Server;
   private socket: any;
 
   constructor(config: IConfig) {
     this.config = config;
+
+    const { httpPort, httpsPort } = config.result;
+    this.port = httpPort || 3000;
+    this.sslPort = httpsPort || 3001;
+
     this.express = express();
     this.express.use(bodyParser.raw({ type: '*/*' }));
     this.mountRoutes();
@@ -35,23 +44,34 @@ class App {
   };
 
   stop = (callback: ((error: Error) => void)) => {
-    if (this.httpServer) {
-      this.httpServer.close((error: Error) => {
-        if (!error) this.socket.send(MessageTypes.STOP);
-        callback(error);
-      });
-    }
+    const afterStop = (error: Error) => {
+      if (!error) this.socket.send(MessageTypes.STOP);
+      callback(error);
+    };
+
+    if (this.httpServer) this.httpServer.close(afterStop);
+    if (this.sslServer) this.sslServer.close(afterStop);
   };
 
   start = (callback: ((error: Error) => void)) => {
-    this.httpServer = this.express.listen(this.port, (error: Error) => {
+    const afterStart = (error: Error) => {
       if (!error) this.socket.send(MessageTypes.RESTART);
       callback(error);
-    });
+    };
+
+    this.httpServer = HTTP.createServer(this.express).listen(this.port, afterStart);
+
+    if (fs.existsSync('./localhost.key') && fs.existsSync('./localhost.crt')) {
+      const sslOptions = {
+        key: fs.readFileSync('./localhost.key'),
+        cert: fs.readFileSync('./localhost.crt'),
+      };
+      this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
+    }
   };
 
   restart = (callback: ((error: Error) => void)) => {
-    if (this.httpServer) this.stop(() => this.start(this.handleError));
+    if (this.httpServer || this.sslServer) this.stop(() => this.start(this.handleError));
     else this.start(this.handleError);
   };
 
