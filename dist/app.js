@@ -68,7 +68,6 @@ class App {
         };
         this.handleUIMessage = (message) => {
             const messageCode = Number(message.toString());
-            console.log('Received message', message, messageCode);
             switch (messageCode) {
                 case 0 /* STOP */:
                     return this.stop(this.handleError);
@@ -82,7 +81,6 @@ class App {
         this.handleError = (error) => {
             if (!error)
                 return;
-            console.log('Sending error', error);
             this.socket.send(`${2 /* ERROR */}${error}`);
             const logObject = {
                 type: 0 /* SERVER */,
@@ -94,7 +92,7 @@ class App {
         };
         this.config = config;
         const { httpPort, httpsPort } = config.result;
-        this.port = 3000;
+        this.port = httpPort || 3000;
         this.sslPort = httpsPort || 3001;
         this.express = express_1.default();
         this.express.use(body_parser_1.default.raw({ type: '*/*' }));
@@ -115,7 +113,6 @@ class App {
         this.addMissedRouteHandler();
     }
     getAppropriateListenerFunction(method) {
-        console.log('​App -> method', method);
         if (method === 'delete')
             return this.express.get.bind(this.express);
         if (method === 'get')
@@ -136,7 +133,6 @@ class App {
         const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
         httpMethodListenerFunction(path, (req, res) => {
             const response = this.substituteParams(endpoint.response, req.params);
-            console.log('​App -> response', response);
             if (timeout > 0) {
                 setTimeout(() => res.status(statusCode).send(response), timeout);
             }
@@ -146,7 +142,6 @@ class App {
         });
     }
     substituteParams(resp, params) {
-        console.log('​App -> resp', resp);
         for (const i in resp) {
             // Check nested objects recursively
             if (typeof resp[i] === 'object') {

@@ -177,7 +177,6 @@ class App {
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const response = this.substituteParams(endpoint.response, req.params);
-      console.log('​App -> response', response);
 
       if (timeout > 0) {
         setTimeout(() => res.status(statusCode).send(response), timeout);
