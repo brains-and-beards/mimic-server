@@ -49,11 +49,13 @@
     "@types/lodash": "^4.14.116",
     "@types/normalizr": "^2.0.18",
     "@types/zeromq": "^4.6.1",
+    "@types/request": "^2.47.1",
     "commander": "^2.16.0",
     "express": "^4.16.3",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
     "normalizr": "^3.2.4",
-    "zeromq": "^4.6.0"
+    "zeromq": "^4.6.0",
+    "request": "^2.88.0"
   }
 }

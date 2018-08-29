@@ -48,7 +48,6 @@ class Server {
             });
         };
         this.startServer = (config) => {
-            console.log('​Server -> privatestartServer -> config', config);
             if (this.app && this.app.isListening()) {
                 this.app.stop(error => {
                     if (error) {

@@ -1,9 +1,11 @@
 /* tslint:disable:no-console */
 import express from 'express';
+import bodyParser from 'body-parser';
 import HTTP from 'http';
 import _ from 'lodash';
 import { socket } from 'zeromq';
 import moment from 'moment';
+import request from 'request';
 
 export const enum MessageTypes {
   STOP,
@@ -15,6 +17,7 @@ export const enum MessageTypes {
 export const enum LogTypes {
   SERVER,
   REQUEST,
+  RESPONSE,
 }
 
 interface ILog {
@@ -30,6 +33,8 @@ interface ILog {
   readonly query?: any;
   readonly type: LogTypes;
   readonly message?: string;
+  readonly headers?: any;
+  readonly url?: string;
 }
 
 class App {
@@ -43,6 +48,7 @@ class App {
   constructor(config: IConfig) {
     this.config = config;
     this.express = express();
+    this.express.use(bodyParser.raw({ type: '*/*' }));
     this.mountRoutes();
 
     this.socket = socket('rep');
@@ -154,7 +160,7 @@ class App {
     const timeout = endpoint.timeout || 0;
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
-    httpMethodListenerFunction(path, (req: any, res: any) => {
+    httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const response = this.substituteParams(endpoint.response, req.params);
       console.log('​App -> response', response);
 
@@ -182,10 +188,8 @@ class App {
   }
 
   private addMissedRouteHandler() {
-    this.express.use('/', (req: any, res: any, next: any) => {
-      const statusCode = 404; // TODO: Change it
-
-      const logObject: ILog = {
+    this.express.use('/', (req: express.Request, res: any, next: any) => {
+      const requestLog: ILog = {
         method: req.method,
         path: req.path,
         body: req.body,
@@ -194,21 +198,66 @@ class App {
         host: req.hostname,
         date: moment().format('YYYY/MM/DD HH:mm:ss'),
         port: parseInt(this.port.toString(), 10),
-        statusCode,
         query: req.query,
         type: LogTypes.REQUEST,
       };
+      this.socketLogs.send(JSON.stringify(requestLog));
+      const [projectName] = req.originalUrl.split('/');
+      const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
-      const response = this.handleUnmocked(req, logObject);
-      res.status(404).send(response);
+      if (project && project.fallbackUrlPrefix) {
+        const response = this.forwardRequest(req, res);
+      } else {
+        const responseLog: ILog = {
+          statusCode: 200,
+          path: req.path,
+          method: req.method,
+          protocol: req.protocol,
+          host: req.hostname,
+          port: parseInt(this.port.toString(), 10),
+          matched: true, // TODO: Do we need this field?
+          type: LogTypes.RESPONSE,
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+        };
+        this.socketLogs.send(JSON.stringify(responseLog));
+        res.status(200).send('RESPONSE'); // TODO: Add mock response
+      }
     });
   }
 
-  private handleUnmocked(req: any, log: ILog): any {
-    // TODO: Log an unmocked request
-    this.socketLogs.send(JSON.stringify(log));
-    // TODO: return a forwarded response from the real API server
-    return 'TODO: get a response from the origin API';
+  private getForwardingOptions(req: express.Request) {
+    const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
+    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+    const { domain, path, port } = project.fallbackUrlPrefix;
+
+    const url = `http://${domain}:${port}${path}/${localPath.join('/')}`;
+    return {
+      headers: { ...req.headers, host: domain },
+      method: req.method,
+      body: req.body,
+      url,
+    };
+  }
+
+  private forwardRequest(req: express.Request, responseStream: express.Response) {
+    const options = this.getForwardingOptions(req);
+
+    request(options)
+      .on('response', (response: any) => {
+        const logObject: ILog = {
+          path: req.path,
+          method: req.method,
+          matched: true, // TODO: Do we need this field?
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+          statusCode: response.statusCode,
+          type: LogTypes.RESPONSE,
+          protocol: req.protocol,
+          host: req.hostname,
+          port: parseInt(this.port.toString(), 10),
+        };
+        this.socketLogs.send(JSON.stringify(logObject));
+      })
+      .pipe(responseStream);
   }
 }
 

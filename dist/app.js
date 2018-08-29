@@ -5,9 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 /* tslint:disable:no-console */
 const express_1 = __importDefault(require("express"));
+const body_parser_1 = __importDefault(require("body-parser"));
 const lodash_1 = __importDefault(require("lodash"));
 const zeromq_1 = require("zeromq");
 const moment_1 = __importDefault(require("moment"));
+const request_1 = __importDefault(require("request"));
 class App {
     constructor(config) {
         this.port = process.env.PORT || 3000; // TODO: get port from the config file
@@ -82,6 +84,7 @@ class App {
         };
         this.config = config;
         this.express = express_1.default();
+        this.express.use(body_parser_1.default.raw({ type: '*/*' }));
         this.mountRoutes();
         this.socket = zeromq_1.socket('rep');
         this.socket.connect('ipc://server_commands.ipc');
@@ -146,8 +149,7 @@ class App {
     }
     addMissedRouteHandler() {
         this.express.use('/', (req, res, next) => {
-            const statusCode = 404; // TODO: Change it
-            const logObject = {
+            const requestLog = {
                 method: req.method,
                 path: req.path,
                 body: req.body,
@@ -156,19 +158,62 @@ class App {
                 host: req.hostname,
                 date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
                 port: parseInt(this.port.toString(), 10),
-                statusCode,
                 query: req.query,
                 type: 1 /* REQUEST */,
             };
-            const response = this.handleUnmocked(req, logObject);
-            res.status(404).send(response);
+            this.socketLogs.send(JSON.stringify(requestLog));
+            const [projectName] = req.originalUrl.split('/');
+            const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+            if (project && project.fallbackUrlPrefix) {
+                const response = this.forwardRequest(req, res);
+            }
+            else {
+                const responseLog = {
+                    statusCode: 200,
+                    path: req.path,
+                    method: req.method,
+                    protocol: req.protocol,
+                    host: req.hostname,
+                    port: parseInt(this.port.toString(), 10),
+                    matched: true,
+                    type: 2 /* RESPONSE */,
+                    date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                };
+                this.socketLogs.send(JSON.stringify(responseLog));
+                res.status(200).send('RESPONSE'); // TODO: Add mock response
+            }
         });
     }
-    handleUnmocked(req, log) {
-        // TODO: Log an unmocked request
-        this.socketLogs.send(JSON.stringify(log));
-        // TODO: return a forwarded response from the real API server
-        return 'TODO: get a response from the origin API';
+    getForwardingOptions(req) {
+        const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
+        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+        const { domain, path, port } = project.fallbackUrlPrefix;
+        const url = `http://${domain}:${port}${path}/${localPath.join('/')}`;
+        return {
+            headers: Object.assign({}, req.headers, { host: domain }),
+            method: req.method,
+            body: req.body,
+            url,
+        };
+    }
+    forwardRequest(req, responseStream) {
+        const options = this.getForwardingOptions(req);
+        request_1.default(options)
+            .on('response', (response) => {
+            const logObject = {
+                path: req.path,
+                method: req.method,
+                matched: true,
+                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                statusCode: response.statusCode,
+                type: 2 /* RESPONSE */,
+                protocol: req.protocol,
+                host: req.hostname,
+                port: parseInt(this.port.toString(), 10),
+            };
+            this.socketLogs.send(JSON.stringify(logObject));
+        })
+            .pipe(responseStream);
     }
 }
 exports.default = App;
