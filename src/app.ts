@@ -124,7 +124,6 @@ class App {
 
   private handleUIMessage = (message: Uint8Array) => {
     const messageCode = Number(message.toString());
-    console.log('Received message', message, messageCode);
 
     switch (messageCode) {
       case MessageTypes.STOP:
@@ -140,7 +139,6 @@ class App {
 
   private handleError = (error: Error) => {
     if (!error) return;
-    console.log('Sending error', error);
     this.socket.send(`${MessageTypes.ERROR}${error}`);
     const logObject: ILog = {
       type: LogTypes.SERVER,
@@ -161,7 +159,6 @@ class App {
   }
 
   private getAppropriateListenerFunction(method: string): express.IRouterMatcher<express.Express> {
-    console.log('​App -> method', method);
     if (method === 'delete') return this.express.get.bind(this.express);
     if (method === 'get') return this.express.get.bind(this.express);
     if (method === 'patch') return this.express.get.bind(this.express);
@@ -191,7 +188,6 @@ class App {
   }
 
   private substituteParams(resp: any, params: any): any {
-    console.log('​App -> resp', resp);
     for (const i in resp) {
       // Check nested objects recursively
       if (typeof resp[i] === 'object') {
