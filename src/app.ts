@@ -5,6 +5,7 @@ import HTTP from 'http';
 import HTTPS from 'https';
 import _ from 'lodash';
 import { socket } from 'zeromq';
+import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
 
@@ -12,6 +13,30 @@ export const enum MessageTypes {
   STOP,
   RESTART,
   ERROR,
+  LOG,
+}
+
+export const enum LogTypes {
+  SERVER,
+  REQUEST,
+  RESPONSE,
+}
+
+interface ILog {
+  readonly body?: any;
+  readonly date?: string;
+  readonly matched?: boolean;
+  readonly method?: string;
+  readonly path?: string;
+  readonly protocol?: string;
+  readonly host?: string;
+  readonly port?: number;
+  readonly statusCode?: number;
+  readonly query?: any;
+  readonly type: LogTypes;
+  readonly message?: string;
+  readonly headers?: any;
+  readonly url?: string;
 }
 
 class App {
@@ -22,6 +47,7 @@ class App {
   private httpServer?: HTTP.Server;
   private sslServer?: HTTPS.Server;
   private socket: any;
+  private socketLogs: any;
 
   constructor(config: IConfig) {
     this.config = config;
@@ -36,6 +62,9 @@ class App {
 
     this.socket = socket('rep');
     this.socket.connect('ipc://server_commands.ipc');
+    this.socketLogs = socket('req');
+    this.socketLogs.connect('ipc://logs.ips');
+    this.socketLogs.on('message', this.handleUIMessageLogs);
     this.socket.on('message', this.handleUIMessage);
   }
 
@@ -45,7 +74,16 @@ class App {
 
   stop = (callback: ((error: Error) => void)) => {
     const afterStop = (error: Error) => {
-      if (!error) this.socket.send(MessageTypes.STOP);
+      if (!error) {
+        const logObject: ILog = {
+          type: LogTypes.SERVER,
+          message: 'STOP',
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+          matched: true, // TODO: Do we need this field?
+        };
+        this.socketLogs.send(JSON.stringify(logObject));
+        this.socket.send(MessageTypes.STOP);
+      }
       callback(error);
     };
 
@@ -55,7 +93,16 @@ class App {
 
   start = (callback: ((error: Error) => void)) => {
     const afterStart = (error: Error) => {
-      if (!error) this.socket.send(MessageTypes.RESTART);
+      if (!error) {
+        const logObject: ILog = {
+          type: LogTypes.SERVER,
+          message: 'RESTART',
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+          matched: true, // TODO: Do we need this field?
+        };
+        this.socketLogs.send(JSON.stringify(logObject));
+        this.socket.send(MessageTypes.RESTART);
+      }
       callback(error);
     };
 
@@ -77,7 +124,6 @@ class App {
 
   private handleUIMessage = (message: Uint8Array) => {
     const messageCode = Number(message.toString());
-    console.log('Received message', message, messageCode);
 
     switch (messageCode) {
       case MessageTypes.STOP:
@@ -88,10 +134,19 @@ class App {
     }
   };
 
+  // tslint:disable-next-line:no-empty
+  private handleUIMessageLogs = (message: Uint8Array) => {};
+
   private handleError = (error: Error) => {
     if (!error) return;
-    console.log('Sending error', error);
     this.socket.send(`${MessageTypes.ERROR}${error}`);
+    const logObject: ILog = {
+      type: LogTypes.SERVER,
+      message: `ERROR ${error}`,
+      matched: true, // TODO: Do we need this field?
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
+    };
+    this.socketLogs.send(JSON.stringify(logObject));
   };
 
   private mountRoutes(): void {
@@ -147,7 +202,39 @@ class App {
 
   private addMissedRouteHandler() {
     this.express.use('/', (req: express.Request, res: any, next: any) => {
-      const response = this.forwardRequest(req, res);
+      const requestLog: ILog = {
+        method: req.method,
+        path: req.path,
+        body: req.body,
+        matched: true, // TODO: Do we need this field?
+        protocol: req.protocol,
+        host: req.hostname,
+        date: moment().format('YYYY/MM/DD HH:mm:ss'),
+        port: parseInt(this.port.toString(), 10),
+        query: req.query,
+        type: LogTypes.REQUEST,
+      };
+      this.socketLogs.send(JSON.stringify(requestLog));
+      const [projectName] = req.originalUrl.split('/');
+      const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+
+      if (project && project.fallbackUrlPrefix) {
+        const response = this.forwardRequest(req, res);
+      } else {
+        const responseLog: ILog = {
+          statusCode: 200,
+          path: req.path,
+          method: req.method,
+          protocol: req.protocol,
+          host: req.hostname,
+          port: parseInt(this.port.toString(), 10),
+          matched: true, // TODO: Do we need this field?
+          type: LogTypes.RESPONSE,
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+        };
+        this.socketLogs.send(JSON.stringify(responseLog));
+        res.status(200).send('RESPONSE'); // TODO: Add mock response
+      }
     });
   }
 
@@ -156,11 +243,12 @@ class App {
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
     const { domain, path, port } = project.fallbackUrlPrefix;
 
+    const url = `http://${domain}:${port}${path}/${localPath.join('/')}`;
     return {
       headers: { ...req.headers, host: domain },
       method: req.method,
       body: req.body,
-      url: `http://${domain}:${port}${path}/${localPath.join('/')}`,
+      url,
     };
   }
 
@@ -168,8 +256,19 @@ class App {
     const options = this.getForwardingOptions(req);
 
     request(options)
-      .on('response', response => {
-        // TODO Log the response
+      .on('response', (response: any) => {
+        const logObject: ILog = {
+          path: req.path,
+          method: req.method,
+          matched: true, // TODO: Do we need this field?
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+          statusCode: response.statusCode,
+          type: LogTypes.RESPONSE,
+          protocol: req.protocol,
+          host: req.hostname,
+          port: parseInt(this.port.toString(), 10),
+        };
+        this.socketLogs.send(JSON.stringify(logObject));
       })
       .pipe(responseStream);
   }

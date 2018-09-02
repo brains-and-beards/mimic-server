@@ -10,6 +10,7 @@ const http_1 = __importDefault(require("http"));
 const https_1 = __importDefault(require("https"));
 const lodash_1 = __importDefault(require("lodash"));
 const zeromq_1 = require("zeromq");
+const moment_1 = __importDefault(require("moment"));
 const fs_1 = __importDefault(require("fs"));
 const request_1 = __importDefault(require("request"));
 class App {
@@ -19,8 +20,16 @@ class App {
         };
         this.stop = (callback) => {
             const afterStop = (error) => {
-                if (!error)
+                if (!error) {
+                    const logObject = {
+                        type: 0 /* SERVER */,
+                        message: 'STOP',
+                        date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                        matched: true,
+                    };
+                    this.socketLogs.send(JSON.stringify(logObject));
                     this.socket.send(0 /* STOP */);
+                }
                 callback(error);
             };
             if (this.httpServer)
@@ -30,8 +39,16 @@ class App {
         };
         this.start = (callback) => {
             const afterStart = (error) => {
-                if (!error)
+                if (!error) {
+                    const logObject = {
+                        type: 0 /* SERVER */,
+                        message: 'RESTART',
+                        date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                        matched: true,
+                    };
+                    this.socketLogs.send(JSON.stringify(logObject));
                     this.socket.send(1 /* RESTART */);
+                }
                 callback(error);
             };
             this.httpServer = http_1.default.createServer(this.express).listen(this.port, afterStart);
@@ -51,7 +68,6 @@ class App {
         };
         this.handleUIMessage = (message) => {
             const messageCode = Number(message.toString());
-            console.log('Received message', message, messageCode);
             switch (messageCode) {
                 case 0 /* STOP */:
                     return this.stop(this.handleError);
@@ -60,11 +76,19 @@ class App {
                 default:
             }
         };
+        // tslint:disable-next-line:no-empty
+        this.handleUIMessageLogs = (message) => { };
         this.handleError = (error) => {
             if (!error)
                 return;
-            console.log('Sending error', error);
             this.socket.send(`${2 /* ERROR */}${error}`);
+            const logObject = {
+                type: 0 /* SERVER */,
+                message: `ERROR ${error}`,
+                matched: true,
+                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+            };
+            this.socketLogs.send(JSON.stringify(logObject));
         };
         this.config = config;
         const { httpPort, httpsPort } = config.result;
@@ -75,6 +99,9 @@ class App {
         this.mountRoutes();
         this.socket = zeromq_1.socket('rep');
         this.socket.connect('ipc://server_commands.ipc');
+        this.socketLogs = zeromq_1.socket('req');
+        this.socketLogs.connect('ipc://logs.ips');
+        this.socketLogs.on('message', this.handleUIMessageLogs);
         this.socket.on('message', this.handleUIMessage);
     }
     mountRoutes() {
@@ -130,25 +157,69 @@ class App {
     }
     addMissedRouteHandler() {
         this.express.use('/', (req, res, next) => {
-            const response = this.forwardRequest(req, res);
+            const requestLog = {
+                method: req.method,
+                path: req.path,
+                body: req.body,
+                matched: true,
+                protocol: req.protocol,
+                host: req.hostname,
+                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                port: parseInt(this.port.toString(), 10),
+                query: req.query,
+                type: 1 /* REQUEST */,
+            };
+            this.socketLogs.send(JSON.stringify(requestLog));
+            const [projectName] = req.originalUrl.split('/');
+            const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+            if (project && project.fallbackUrlPrefix) {
+                const response = this.forwardRequest(req, res);
+            }
+            else {
+                const responseLog = {
+                    statusCode: 200,
+                    path: req.path,
+                    method: req.method,
+                    protocol: req.protocol,
+                    host: req.hostname,
+                    port: parseInt(this.port.toString(), 10),
+                    matched: true,
+                    type: 2 /* RESPONSE */,
+                    date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                };
+                this.socketLogs.send(JSON.stringify(responseLog));
+                res.status(200).send('RESPONSE'); // TODO: Add mock response
+            }
         });
     }
     getForwardingOptions(req) {
         const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
         const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
         const { domain, path, port } = project.fallbackUrlPrefix;
+        const url = `http://${domain}:${port}${path}/${localPath.join('/')}`;
         return {
             headers: Object.assign({}, req.headers, { host: domain }),
             method: req.method,
             body: req.body,
-            url: `http://${domain}:${port}${path}/${localPath.join('/')}`,
+            url,
         };
     }
     forwardRequest(req, responseStream) {
         const options = this.getForwardingOptions(req);
         request_1.default(options)
-            .on('response', response => {
-            // TODO Log the response
+            .on('response', (response) => {
+            const logObject = {
+                path: req.path,
+                method: req.method,
+                matched: true,
+                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                statusCode: response.statusCode,
+                type: 2 /* RESPONSE */,
+                protocol: req.protocol,
+                host: req.hostname,
+                port: parseInt(this.port.toString(), 10),
+            };
+            this.socketLogs.send(JSON.stringify(logObject));
         })
             .pipe(responseStream);
     }
