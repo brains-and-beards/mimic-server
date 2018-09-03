@@ -62,10 +62,11 @@ class App {
 
     this.socket = socket('rep');
     this.socket.connect('ipc://server_commands.ipc');
+    this.socket.on('message', this.handleUIMessage);
+
     this.socketLogs = socket('req');
     this.socketLogs.connect('ipc://logs.ips');
     this.socketLogs.on('message', this.handleUIMessageLogs);
-    this.socket.on('message', this.handleUIMessage);
   }
 
   isListening = (): boolean => {
@@ -168,6 +169,21 @@ class App {
     throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
   }
 
+  private logForRequest(req: express.Request, res: any): ILog {
+    return {
+      method: req.method,
+      path: req.path,
+      body: req.body,
+      matched: true, // TODO: Do we need this field?
+      protocol: req.protocol,
+      host: req.hostname,
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
+      port: parseInt(this.port.toString(), 10),
+      query: req.query,
+      type: LogTypes.REQUEST,
+    };
+  }
+
   private register(endpoint: IEndpoint, scope = ''): void {
     const path = '/' + scope + endpoint.path;
     const method = endpoint.method.toLowerCase();
@@ -183,6 +199,9 @@ class App {
       } else {
         res.send(response);
       }
+
+      const requestLog = this.logForRequest(req, res);
+      this.socketLogs.send(JSON.stringify(requestLog));
     });
   }
 
@@ -202,18 +221,7 @@ class App {
 
   private addMissedRouteHandler() {
     this.express.use('/', (req: express.Request, res: any, next: any) => {
-      const requestLog: ILog = {
-        method: req.method,
-        path: req.path,
-        body: req.body,
-        matched: true, // TODO: Do we need this field?
-        protocol: req.protocol,
-        host: req.hostname,
-        date: moment().format('YYYY/MM/DD HH:mm:ss'),
-        port: parseInt(this.port.toString(), 10),
-        query: req.query,
-        type: LogTypes.REQUEST,
-      };
+      const requestLog = this.logForRequest(req, res);
       this.socketLogs.send(JSON.stringify(requestLog));
       const [projectName] = req.originalUrl.split('/');
       const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
