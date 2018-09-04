@@ -169,19 +169,21 @@ class App {
     throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
   }
 
-  private logForRequest(req: express.Request, res: any): ILog {
-    return {
+  private sendLog(req: express.Request, matched: boolean, type: LogTypes, statusCode: number): void {
+    const log = {
       method: req.method,
       path: req.path,
       body: req.body,
-      matched: true, // TODO: Do we need this field?
+      matched,
       protocol: req.protocol,
       host: req.hostname,
       date: moment().format('YYYY/MM/DD HH:mm:ss'),
       port: parseInt(this.port.toString(), 10),
       query: req.query,
-      type: LogTypes.REQUEST,
+      type,
+      statusCode,
     };
+    this.socketLogs.send(JSON.stringify(log));
   }
 
   private register(endpoint: IEndpoint, scope = ''): void {
@@ -200,8 +202,7 @@ class App {
         res.send(response);
       }
 
-      const requestLog = this.logForRequest(req, res);
-      this.socketLogs.send(JSON.stringify(requestLog));
+      this.sendLog(req, true, LogTypes.REQUEST, 200);
     });
   }
 
@@ -221,26 +222,13 @@ class App {
 
   private addMissedRouteHandler() {
     this.express.use('/', (req: express.Request, res: any, next: any) => {
-      const requestLog = this.logForRequest(req, res);
-      this.socketLogs.send(JSON.stringify(requestLog));
       const [projectName] = req.originalUrl.split('/');
       const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
       if (project && project.fallbackUrlPrefix) {
         const response = this.forwardRequest(req, res);
       } else {
-        const responseLog: ILog = {
-          statusCode: 200,
-          path: req.path,
-          method: req.method,
-          protocol: req.protocol,
-          host: req.hostname,
-          port: parseInt(this.port.toString(), 10),
-          matched: true, // TODO: Do we need this field?
-          type: LogTypes.RESPONSE,
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-        };
-        this.socketLogs.send(JSON.stringify(responseLog));
+        this.sendLog(req, false, LogTypes.RESPONSE);
         res.status(200).send('RESPONSE'); // TODO: Add mock response
       }
     });
@@ -265,18 +253,7 @@ class App {
 
     request(options)
       .on('response', (response: any) => {
-        const logObject: ILog = {
-          path: req.path,
-          method: req.method,
-          matched: true, // TODO: Do we need this field?
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          statusCode: response.statusCode,
-          type: LogTypes.RESPONSE,
-          protocol: req.protocol,
-          host: req.hostname,
-          port: parseInt(this.port.toString(), 10),
-        };
-        this.socketLogs.send(JSON.stringify(logObject));
+        this.sendLog(req, true, LogTypes.RESPONSE, response.statusCode);
       })
       .pipe(responseStream);
   }
