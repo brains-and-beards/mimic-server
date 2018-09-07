@@ -222,7 +222,7 @@ class App {
 
   private addMissedRouteHandler() {
     this.express.use('/', (req: express.Request, res: any, next: any) => {
-      const [projectName] = req.originalUrl.split('/');
+      const projectName = req.originalUrl.split('/')[1];
       const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
       if (project && project.fallbackUrlPrefix) {
@@ -238,12 +238,14 @@ class App {
     const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
     const { domain, path, port } = project.fallbackUrlPrefix;
+    const portInfo = port ? `:${port}` : '';
 
-    const url = `http://${domain}:${port}${path}/${localPath.join('/')}`;
+    const url = `http://${domain}${portInfo}${path}/${localPath.join('/')}`;
+
     return {
       headers: { ...req.headers, host: domain },
       method: req.method,
-      body: req.body,
+      body: req.method === 'GET' ? null : req.body,
       url,
     };
   }
