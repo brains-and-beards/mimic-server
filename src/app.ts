@@ -80,7 +80,7 @@ class App {
           type: LogTypes.SERVER,
           message: 'STOP',
           date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true, // TODO: Do we need this field?
+          matched: true,
         };
         this.socketLogs.send(JSON.stringify(logObject));
         this.socket.send(MessageTypes.STOP);
@@ -99,7 +99,7 @@ class App {
           type: LogTypes.SERVER,
           message: 'RESTART',
           date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true, // TODO: Do we need this field?
+          matched: true,
         };
         this.socketLogs.send(JSON.stringify(logObject));
         this.socket.send(MessageTypes.RESTART);
@@ -144,7 +144,7 @@ class App {
     const logObject: ILog = {
       type: LogTypes.SERVER,
       message: `ERROR ${error}`,
-      matched: true, // TODO: Do we need this field?
+      matched: true,
       date: moment().format('YYYY/MM/DD HH:mm:ss'),
     };
     this.socketLogs.send(JSON.stringify(logObject));
@@ -228,7 +228,7 @@ class App {
       if (project && project.fallbackUrlPrefix) {
         const response = this.forwardRequest(req, res);
       } else {
-        this.sendLog(req, false, LogTypes.RESPONSE);
+        this.sendLog(req, false, LogTypes.RESPONSE, 200);
         res.status(200).send('RESPONSE'); // TODO: Add mock response
       }
     });
