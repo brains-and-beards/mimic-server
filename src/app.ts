@@ -169,7 +169,7 @@ class App {
     throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
   }
 
-  private sendLog(req: express.Request, matched: boolean, type: LogTypes, statusCode: number): void {
+  private sendLog(req: express.Request, matched: boolean, type: LogTypes, statusCode: number, respBody?: object): void {
     const log = {
       method: req.method,
       path: req.path,
@@ -182,6 +182,7 @@ class App {
       query: req.query,
       type,
       statusCode,
+      response: respBody,
     };
     this.socketLogs.send(JSON.stringify(log));
   }
@@ -253,11 +254,9 @@ class App {
   private forwardRequest(req: express.Request, responseStream: express.Response) {
     const options = this.getForwardingOptions(req);
 
-    request(options)
-      .on('response', (response: any) => {
-        this.sendLog(req, true, LogTypes.RESPONSE, response.statusCode);
-      })
-      .pipe(responseStream);
+    request(options, (_error, response, body) => {
+      this.sendLog(req, true, LogTypes.RESPONSE, response.statusCode, body);
+    }).pipe(responseStream);
   }
 }
 
