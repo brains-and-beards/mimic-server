@@ -99,10 +99,10 @@ class App {
         this.mountRoutes();
         this.socket = zeromq_1.socket('rep');
         this.socket.connect('ipc://server_commands.ipc');
+        this.socket.on('message', this.handleUIMessage);
         this.socketLogs = zeromq_1.socket('req');
         this.socketLogs.connect('ipc://logs.ips');
         this.socketLogs.on('message', this.handleUIMessageLogs);
-        this.socket.on('message', this.handleUIMessage);
     }
     mountRoutes() {
         const { endpoints, projects } = this.config.entities;
@@ -125,6 +125,23 @@ class App {
             return this.express.get.bind(this.express);
         throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
     }
+    sendLog(req, matched, type, statusCode, respBody) {
+        const log = {
+            method: req.method,
+            path: req.path,
+            body: req.body,
+            matched,
+            protocol: req.protocol,
+            host: req.hostname,
+            date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+            port: parseInt(this.port.toString(), 10),
+            query: req.query,
+            type,
+            statusCode,
+            response: respBody,
+        };
+        this.socketLogs.send(JSON.stringify(log));
+    }
     register(endpoint, scope = '') {
         const path = '/' + scope + endpoint.path;
         const method = endpoint.method.toLowerCase();
@@ -139,6 +156,7 @@ class App {
             else {
                 res.send(response);
             }
+            this.sendLog(req, true, 1 /* REQUEST */, 200);
         });
     }
     substituteParams(resp, params) {
@@ -157,37 +175,13 @@ class App {
     }
     addMissedRouteHandler() {
         this.express.use('/', (req, res, next) => {
-            const requestLog = {
-                method: req.method,
-                path: req.path,
-                body: req.body,
-                matched: true,
-                protocol: req.protocol,
-                host: req.hostname,
-                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
-                port: parseInt(this.port.toString(), 10),
-                query: req.query,
-                type: 1 /* REQUEST */,
-            };
-            this.socketLogs.send(JSON.stringify(requestLog));
-            const [projectName] = req.originalUrl.split('/');
+            const projectName = req.originalUrl.split('/')[1];
             const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
             if (project && project.fallbackUrlPrefix) {
                 const response = this.forwardRequest(req, res);
             }
             else {
-                const responseLog = {
-                    statusCode: 200,
-                    path: req.path,
-                    method: req.method,
-                    protocol: req.protocol,
-                    host: req.hostname,
-                    port: parseInt(this.port.toString(), 10),
-                    matched: true,
-                    type: 2 /* RESPONSE */,
-                    date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
-                };
-                this.socketLogs.send(JSON.stringify(responseLog));
+                this.sendLog(req, false, 2 /* RESPONSE */, 200);
                 res.status(200).send('RESPONSE'); // TODO: Add mock response
             }
         });
@@ -196,32 +190,20 @@ class App {
         const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
         const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
         const { domain, path, port } = project.fallbackUrlPrefix;
-        const url = `http://${domain}:${port}${path}/${localPath.join('/')}`;
+        const portInfo = port ? `:${port}` : '';
+        const url = `http://${domain}${portInfo}${path}/${localPath.join('/')}`;
         return {
             headers: Object.assign({}, req.headers, { host: domain }),
             method: req.method,
-            body: req.body,
+            body: req.method === 'GET' ? null : req.body,
             url,
         };
     }
     forwardRequest(req, responseStream) {
         const options = this.getForwardingOptions(req);
-        request_1.default(options)
-            .on('response', (response) => {
-            const logObject = {
-                path: req.path,
-                method: req.method,
-                matched: true,
-                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
-                statusCode: response.statusCode,
-                type: 2 /* RESPONSE */,
-                protocol: req.protocol,
-                host: req.hostname,
-                port: parseInt(this.port.toString(), 10),
-            };
-            this.socketLogs.send(JSON.stringify(logObject));
-        })
-            .pipe(responseStream);
+        request_1.default(options, (_error, response, body) => {
+            this.sendLog(req, true, 2 /* RESPONSE */, response.statusCode, body);
+        }).pipe(responseStream);
     }
 }
 exports.default = App;
