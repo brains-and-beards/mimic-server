@@ -114,7 +114,9 @@ class App {
         key: fs.readFileSync('./localhost.key'),
         cert: fs.readFileSync('./localhost.crt'),
       };
-      this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
+
+      // TODO: We should get proper Android support before we launch SSL support
+      // this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
     }
   };
 
