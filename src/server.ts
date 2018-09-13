@@ -5,6 +5,7 @@ import { promisify } from 'util';
 
 import App from './app';
 import { ConfigSchema } from './Models/DataSchema';
+import { ErrorHandler } from './errors/error-handler';
 
 class Server {
   readFileAsync = promisify(fs.readFile);
@@ -53,7 +54,8 @@ class Server {
         this.startServer(config);
       })
       .catch(error => {
-        console.error(error);
+        ErrorHandler.checkErrorAndStopProcess(error);
+        process.exit();
       });
   };
 
