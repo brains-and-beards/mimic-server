@@ -8,6 +8,7 @@ import { socket } from 'zeromq';
 import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
+import { ErrorHandler } from './errors/error-handler';
 
 export const enum MessageTypes {
   STOP,
@@ -107,7 +108,10 @@ class App {
       callback(error);
     };
 
-    this.httpServer = HTTP.createServer(this.express).listen(this.port, afterStart);
+    this.httpServer = HTTP.createServer(this.express);
+    this.httpServer.listen(this.port, afterStart).on('error', (error: any) => {
+      ErrorHandler.checkErrorAndStopProcess(error);
+    });
 
     if (fs.existsSync('./localhost.key') && fs.existsSync('./localhost.crt')) {
       const sslOptions = {
