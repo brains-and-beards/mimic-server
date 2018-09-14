@@ -11,7 +11,7 @@ class Server {
   readFileAsync = promisify(fs.readFile);
   configFilePath: string;
   app?: App;
-  wait?: boolean;
+  wait: boolean = false;
 
   constructor(filename: string) {
     if (!filename) {
@@ -22,7 +22,7 @@ class Server {
     console.log('Reading config file from: ' + this.configFilePath);
   }
 
-  run = (wait = false) => {
+  run = (wait: boolean) => {
     this.wait = wait;
     console.log('Starting run');
     this.watchConfigForChanges(this.configFilePath);
@@ -76,7 +76,7 @@ class Server {
 
   private _startServer = (config: IConfig) => {
     this.app = new App(config);
-    if (!this.wait)
+    if (!this.wait) {
       this.app.start(error => {
         if (error) {
           return console.error(error);
@@ -84,6 +84,9 @@ class Server {
 
         return console.log(`server is listening`);
       });
+    } else {
+      this.wait = false;
+    }
   };
 }
 
