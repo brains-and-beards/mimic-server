@@ -61,7 +61,7 @@ class App {
     this.express.use(bodyParser.raw({ type: '*/*' }));
     this.mountRoutes();
 
-    this.socket = socket('rep');
+    this.socket = socket('pull');
     this.socket.connect('ipc://server_commands.ipc');
     this.socket.on('message', this.handleUIMessage);
 
@@ -84,7 +84,6 @@ class App {
           matched: true,
         };
         this.socketLogs.send(JSON.stringify(logObject));
-        this.socket.send(MessageTypes.STOP);
       }
       callback(error);
     };
@@ -103,7 +102,6 @@ class App {
           matched: true,
         };
         this.socketLogs.send(JSON.stringify(logObject));
-        this.socket.send(MessageTypes.RESTART);
       }
       callback(error);
     };
@@ -146,7 +144,6 @@ class App {
 
   private handleError = (error: Error) => {
     if (!error) return;
-    this.socket.send(`${MessageTypes.ERROR}${error}`);
     const logObject: ILog = {
       type: LogTypes.SERVER,
       message: `ERROR ${error}`,
