@@ -17,11 +17,11 @@ const normalizr_1 = require("normalizr");
 const util_1 = require("util");
 const app_1 = __importDefault(require("./app"));
 const DataSchema_1 = require("./Models/DataSchema");
+const error_handler_1 = require("./errors/error-handler");
 class Server {
     constructor(filename) {
         this.readFileAsync = util_1.promisify(fs_1.default.readFile);
-        this.run = (wait = false) => {
-            this.wait = wait;
+        this.run = () => {
             console.log('Starting run');
             this.watchConfigForChanges(this.configFilePath);
             this.readAndStart();
@@ -41,20 +41,20 @@ class Server {
             this.readFile(this.configFilePath)
                 .then(json => {
                 const config = this.parseConfig(json);
-                this.startServer(config);
+                this.restartServer(config);
             })
                 .catch(error => {
-                console.error(error);
+                error_handler_1.ErrorHandler.checkErrorAndStopProcess(error);
+                process.exit();
             });
         };
-        this.startServer = (config) => {
-            if (this.app && this.app.isListening()) {
+        this.restartServer = (config) => {
+            if (this.app.isListening()) {
                 this.app.stop(error => {
                     if (error) {
                         console.error(error);
                     }
                     else {
-                        console.log('close');
                         this._startServer(config);
                     }
                 });
@@ -64,15 +64,15 @@ class Server {
             }
         };
         this._startServer = (config) => {
-            this.app = new app_1.default(config);
-            if (!this.wait)
-                this.app.start(error => {
-                    if (error) {
-                        return console.error(error);
-                    }
-                    return console.log(`server is listening`);
-                });
+            this.app.setupServer(config);
+            this.app.start(error => {
+                if (error) {
+                    return console.error(error);
+                }
+                return console.log(`server is listening`);
+            });
         };
+        this.app = new app_1.default();
         if (!filename) {
             this.configFilePath = './apimocker.json';
         }
