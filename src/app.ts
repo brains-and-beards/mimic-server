@@ -12,7 +12,7 @@ import { ErrorHandler } from './errors/error-handler';
 
 export const enum MessageTypes {
   STOP,
-  RESTART,
+  START,
   ERROR,
   LOG,
 }
@@ -107,7 +107,7 @@ class App {
       if (!error) {
         const logObject: ILog = {
           type: LogTypes.SERVER,
-          message: 'RESTART',
+          message: 'START',
           date: moment().format('YYYY/MM/DD HH:mm:ss'),
           matched: true,
         };
@@ -132,19 +132,14 @@ class App {
     }
   };
 
-  restart = (callback: ((error: Error) => void)) => {
-    if (this.httpServer || this.sslServer) this.stop(() => this.start(this.handleError));
-    else this.start(this.handleError);
-  };
-
   private handleUIMessage = (message: Uint8Array) => {
     const messageCode = Number(message.toString());
 
     switch (messageCode) {
       case MessageTypes.STOP:
         return this.stop(this.handleError);
-      case MessageTypes.RESTART:
-        return this.restart(this.handleError);
+      case MessageTypes.START:
+        return this.start(this.handleError);
       default:
     }
   };
