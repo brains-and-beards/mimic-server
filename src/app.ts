@@ -41,16 +41,34 @@ interface ILog {
 }
 
 class App {
+  // @ts-ignore
   private port: number;
+  // @ts-ignore
   private sslPort: number;
+  // @ts-ignore
   private express: express.Express;
-  private config: IConfig;
+  private config: IConfig = {
+    entities: { endpoints: [], projects: [] },
+    result: { httpPort: 3000, httpsPort: 3001 },
+  };
   private httpServer?: HTTP.Server;
   private sslServer?: HTTPS.Server;
   private socket: any;
   private socketLogs: any;
 
-  constructor(config: IConfig) {
+  constructor() {
+    this.setupServer(this.config);
+
+    this.socket = socket('pull');
+    this.socket.connect('ipc://server_commands.ipc');
+    this.socket.on('message', this.handleUIMessage);
+
+    this.socketLogs = socket('req');
+    this.socketLogs.connect('ipc://logs.ips');
+    this.socketLogs.on('message', this.handleUIMessageLogs);
+  }
+
+  setupServer(config: IConfig) {
     this.config = config;
 
     const { httpPort, httpsPort } = config.result;
@@ -60,14 +78,6 @@ class App {
     this.express = express();
     this.express.use(bodyParser.raw({ type: '*/*' }));
     this.mountRoutes();
-
-    this.socket = socket('pull');
-    this.socket.connect('ipc://server_commands.ipc');
-    this.socket.on('message', this.handleUIMessage);
-
-    this.socketLogs = socket('req');
-    this.socketLogs.connect('ipc://logs.ips');
-    this.socketLogs.on('message', this.handleUIMessageLogs);
   }
 
   isListening = (): boolean => {
