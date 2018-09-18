@@ -10,10 +10,10 @@ import { ErrorHandler } from './errors/error-handler';
 class Server {
   readFileAsync = promisify(fs.readFile);
   configFilePath: string;
-  app?: App;
-  wait: boolean = false;
+  app: App;
 
   constructor(filename: string) {
+    this.app = new App();
     if (!filename) {
       this.configFilePath = './apimocker.json';
     } else {
@@ -22,8 +22,7 @@ class Server {
     console.log('Reading config file from: ' + this.configFilePath);
   }
 
-  run = (wait: boolean) => {
-    this.wait = wait;
+  run = () => {
     console.log('Starting run');
     this.watchConfigForChanges(this.configFilePath);
     this.readAndStart();
@@ -51,7 +50,7 @@ class Server {
     this.readFile(this.configFilePath)
       .then(json => {
         const config = this.parseConfig(json);
-        this.startServer(config);
+        this.restartServer(config);
       })
       .catch(error => {
         ErrorHandler.checkErrorAndStopProcess(error);
@@ -59,13 +58,12 @@ class Server {
       });
   };
 
-  private startServer = (config: IConfig) => {
-    if (this.app && this.app.isListening()) {
+  private restartServer = (config: IConfig) => {
+    if (this.app.isListening()) {
       this.app.stop(error => {
         if (error) {
           console.error(error);
         } else {
-          console.log('close');
           this._startServer(config);
         }
       });
@@ -75,18 +73,15 @@ class Server {
   };
 
   private _startServer = (config: IConfig) => {
-    this.app = new App(config);
-    if (!this.wait) {
-      this.app.start(error => {
-        if (error) {
-          return console.error(error);
-        }
+    this.app.setupServer(config);
 
-        return console.log(`server is listening`);
-      });
-    } else {
-      this.wait = false;
-    }
+    this.app.start(error => {
+      if (error) {
+        return console.error(error);
+      }
+
+      return console.log(`server is listening`);
+    });
   };
 }
 
