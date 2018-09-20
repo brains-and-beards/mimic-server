@@ -7,14 +7,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const http_1 = __importDefault(require("http"));
-const https_1 = __importDefault(require("https"));
 const lodash_1 = __importDefault(require("lodash"));
 const zeromq_1 = require("zeromq");
 const moment_1 = __importDefault(require("moment"));
 const fs_1 = __importDefault(require("fs"));
 const request_1 = __importDefault(require("request"));
+const error_handler_1 = require("./errors/error-handler");
 class App {
-    constructor(config) {
+    constructor() {
+        this.config = {
+            entities: { endpoints: [], projects: [] },
+            result: { httpPort: 3000, httpsPort: 3001 },
+        };
         this.isListening = () => {
             return this.httpServer ? this.httpServer.listening : false;
         };
@@ -28,7 +32,6 @@ class App {
                         matched: true,
                     };
                     this.socketLogs.send(JSON.stringify(logObject));
-                    this.socket.send(0 /* STOP */);
                 }
                 callback(error);
             };
@@ -42,37 +45,34 @@ class App {
                 if (!error) {
                     const logObject = {
                         type: 0 /* SERVER */,
-                        message: 'RESTART',
+                        message: 'START',
                         date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
                         matched: true,
                     };
                     this.socketLogs.send(JSON.stringify(logObject));
-                    this.socket.send(1 /* RESTART */);
                 }
                 callback(error);
             };
-            this.httpServer = http_1.default.createServer(this.express).listen(this.port, afterStart);
+            this.httpServer = http_1.default.createServer(this.express);
+            this.httpServer.listen(this.port, afterStart).on('error', (error) => {
+                error_handler_1.ErrorHandler.checkErrorAndStopProcess(error);
+            });
             if (fs_1.default.existsSync('./localhost.key') && fs_1.default.existsSync('./localhost.crt')) {
                 const sslOptions = {
                     key: fs_1.default.readFileSync('./localhost.key'),
                     cert: fs_1.default.readFileSync('./localhost.crt'),
                 };
-                this.sslServer = https_1.default.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
+                // TODO: We should get proper Android support before we launch SSL support
+                // this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
             }
-        };
-        this.restart = (callback) => {
-            if (this.httpServer || this.sslServer)
-                this.stop(() => this.start(this.handleError));
-            else
-                this.start(this.handleError);
         };
         this.handleUIMessage = (message) => {
             const messageCode = Number(message.toString());
             switch (messageCode) {
                 case 0 /* STOP */:
                     return this.stop(this.handleError);
-                case 1 /* RESTART */:
-                    return this.restart(this.handleError);
+                case 1 /* START */:
+                    return this.start(this.handleError);
                 default:
             }
         };
@@ -81,7 +81,6 @@ class App {
         this.handleError = (error) => {
             if (!error)
                 return;
-            this.socket.send(`${2 /* ERROR */}${error}`);
             const logObject = {
                 type: 0 /* SERVER */,
                 message: `ERROR ${error}`,
@@ -90,6 +89,15 @@ class App {
             };
             this.socketLogs.send(JSON.stringify(logObject));
         };
+        this.setupServer(this.config);
+        this.socket = zeromq_1.socket('pull');
+        this.socket.connect('ipc://server_commands.ipc');
+        this.socket.on('message', this.handleUIMessage);
+        this.socketLogs = zeromq_1.socket('req');
+        this.socketLogs.connect('ipc://logs.ips');
+        this.socketLogs.on('message', this.handleUIMessageLogs);
+    }
+    setupServer(config) {
         this.config = config;
         const { httpPort, httpsPort } = config.result;
         this.port = httpPort || 3000;
@@ -97,12 +105,6 @@ class App {
         this.express = express_1.default();
         this.express.use(body_parser_1.default.raw({ type: '*/*' }));
         this.mountRoutes();
-        this.socket = zeromq_1.socket('rep');
-        this.socket.connect('ipc://server_commands.ipc');
-        this.socket.on('message', this.handleUIMessage);
-        this.socketLogs = zeromq_1.socket('req');
-        this.socketLogs.connect('ipc://logs.ips');
-        this.socketLogs.on('message', this.handleUIMessageLogs);
     }
     mountRoutes() {
         const { endpoints, projects } = this.config.entities;

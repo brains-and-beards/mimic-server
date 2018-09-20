@@ -12,7 +12,7 @@ import { ErrorHandler } from './errors/error-handler';
 
 export const enum MessageTypes {
   STOP,
-  RESTART,
+  START,
   ERROR,
   LOG,
 }
@@ -41,16 +41,34 @@ interface ILog {
 }
 
 class App {
+  // @ts-ignore
   private port: number;
+  // @ts-ignore
   private sslPort: number;
+  // @ts-ignore
   private express: express.Express;
-  private config: IConfig;
+  private config: IConfig = {
+    entities: { endpoints: [], projects: [] },
+    result: { httpPort: 3000, httpsPort: 3001 },
+  };
   private httpServer?: HTTP.Server;
   private sslServer?: HTTPS.Server;
   private socket: any;
   private socketLogs: any;
 
-  constructor(config: IConfig) {
+  constructor() {
+    this.setupServer(this.config);
+
+    this.socket = socket('pull');
+    this.socket.connect('ipc://server_commands.ipc');
+    this.socket.on('message', this.handleUIMessage);
+
+    this.socketLogs = socket('req');
+    this.socketLogs.connect('ipc://logs.ips');
+    this.socketLogs.on('message', this.handleUIMessageLogs);
+  }
+
+  setupServer(config: IConfig) {
     this.config = config;
 
     const { httpPort, httpsPort } = config.result;
@@ -60,14 +78,6 @@ class App {
     this.express = express();
     this.express.use(bodyParser.raw({ type: '*/*' }));
     this.mountRoutes();
-
-    this.socket = socket('rep');
-    this.socket.connect('ipc://server_commands.ipc');
-    this.socket.on('message', this.handleUIMessage);
-
-    this.socketLogs = socket('req');
-    this.socketLogs.connect('ipc://logs.ips');
-    this.socketLogs.on('message', this.handleUIMessageLogs);
   }
 
   isListening = (): boolean => {
@@ -84,7 +94,6 @@ class App {
           matched: true,
         };
         this.socketLogs.send(JSON.stringify(logObject));
-        this.socket.send(MessageTypes.STOP);
       }
       callback(error);
     };
@@ -98,12 +107,11 @@ class App {
       if (!error) {
         const logObject: ILog = {
           type: LogTypes.SERVER,
-          message: 'RESTART',
+          message: 'START',
           date: moment().format('YYYY/MM/DD HH:mm:ss'),
           matched: true,
         };
         this.socketLogs.send(JSON.stringify(logObject));
-        this.socket.send(MessageTypes.RESTART);
       }
       callback(error);
     };
@@ -124,19 +132,14 @@ class App {
     }
   };
 
-  restart = (callback: ((error: Error) => void)) => {
-    if (this.httpServer || this.sslServer) this.stop(() => this.start(this.handleError));
-    else this.start(this.handleError);
-  };
-
   private handleUIMessage = (message: Uint8Array) => {
     const messageCode = Number(message.toString());
 
     switch (messageCode) {
       case MessageTypes.STOP:
         return this.stop(this.handleError);
-      case MessageTypes.RESTART:
-        return this.restart(this.handleError);
+      case MessageTypes.START:
+        return this.start(this.handleError);
       default:
     }
   };
@@ -146,7 +149,6 @@ class App {
 
   private handleError = (error: Error) => {
     if (!error) return;
-    this.socket.send(`${MessageTypes.ERROR}${error}`);
     const logObject: ILog = {
       type: LogTypes.SERVER,
       message: `ERROR ${error}`,
