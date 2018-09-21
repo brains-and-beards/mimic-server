@@ -168,11 +168,11 @@ class App {
   }
 
   private getAppropriateListenerFunction(method: string): express.IRouterMatcher<express.Express> {
-    if (method === 'delete') return this.express.get.bind(this.express);
+    if (method === 'delete') return this.express.delete.bind(this.express);
     if (method === 'get') return this.express.get.bind(this.express);
-    if (method === 'patch') return this.express.get.bind(this.express);
-    if (method === 'post') return this.express.get.bind(this.express);
-    if (method === 'put') return this.express.get.bind(this.express);
+    if (method === 'patch') return this.express.patch.bind(this.express);
+    if (method === 'post') return this.express.post.bind(this.express);
+    if (method === 'put') return this.express.put.bind(this.express);
 
     throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
   }
@@ -263,7 +263,7 @@ class App {
     const options = this.getForwardingOptions(req);
 
     request(options, (_error, response, body) => {
-      this.sendLog(req, true, LogTypes.RESPONSE, response.statusCode, body);
+      this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 200, body);
     }).pipe(responseStream);
   }
 }

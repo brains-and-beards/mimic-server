@@ -116,15 +116,15 @@ class App {
     }
     getAppropriateListenerFunction(method) {
         if (method === 'delete')
-            return this.express.get.bind(this.express);
+            return this.express.delete.bind(this.express);
         if (method === 'get')
             return this.express.get.bind(this.express);
         if (method === 'patch')
-            return this.express.get.bind(this.express);
+            return this.express.patch.bind(this.express);
         if (method === 'post')
-            return this.express.get.bind(this.express);
+            return this.express.post.bind(this.express);
         if (method === 'put')
-            return this.express.get.bind(this.express);
+            return this.express.put.bind(this.express);
         throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
     }
     sendLog(req, matched, type, statusCode, respBody) {
@@ -204,7 +204,7 @@ class App {
     forwardRequest(req, responseStream) {
         const options = this.getForwardingOptions(req);
         request_1.default(options, (_error, response, body) => {
-            this.sendLog(req, true, 2 /* RESPONSE */, response.statusCode, body);
+            this.sendLog(req, true, 2 /* RESPONSE */, response && response.statusCode ? response.statusCode : 200, body);
         }).pipe(responseStream);
     }
 }
