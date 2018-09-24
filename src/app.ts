@@ -263,7 +263,7 @@ class App {
     const options = this.getForwardingOptions(req);
 
     request(options, (_error, response, body) => {
-      this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 200, body);
+      this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 418, body);
     }).pipe(responseStream);
   }
 }
