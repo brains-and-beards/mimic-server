@@ -204,7 +204,7 @@ class App {
     forwardRequest(req, responseStream) {
         const options = this.getForwardingOptions(req);
         request_1.default(options, (_error, response, body) => {
-            this.sendLog(req, true, 2 /* RESPONSE */, response && response.statusCode ? response.statusCode : 200, body);
+            this.sendLog(req, true, 2 /* RESPONSE */, response && response.statusCode ? response.statusCode : 418, body);
         }).pipe(responseStream);
     }
 }
