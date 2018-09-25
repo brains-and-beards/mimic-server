@@ -63,9 +63,8 @@ class App {
     this.socket.connect('ipc://server_commands.ipc');
     this.socket.on('message', this.handleUIMessage);
 
-    this.socketLogs = socket('req');
-    this.socketLogs.connect('ipc://logs.ips');
-    this.socketLogs.on('message', this.handleUIMessageLogs);
+    this.socketLogs = socket('push');
+    this.socketLogs.bindSync('ipc://logs.ips');
   }
 
   setupServer(config: IConfig) {
@@ -143,9 +142,6 @@ class App {
       default:
     }
   };
-
-  // tslint:disable-next-line:no-empty
-  private handleUIMessageLogs = (message: Uint8Array) => {};
 
   private handleError = (error: Error) => {
     if (!error) return;

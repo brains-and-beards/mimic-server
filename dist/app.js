@@ -76,8 +76,6 @@ class App {
                 default:
             }
         };
-        // tslint:disable-next-line:no-empty
-        this.handleUIMessageLogs = (message) => { };
         this.handleError = (error) => {
             if (!error)
                 return;
@@ -93,9 +91,8 @@ class App {
         this.socket = zeromq_1.socket('pull');
         this.socket.connect('ipc://server_commands.ipc');
         this.socket.on('message', this.handleUIMessage);
-        this.socketLogs = zeromq_1.socket('req');
-        this.socketLogs.connect('ipc://logs.ips');
-        this.socketLogs.on('message', this.handleUIMessageLogs);
+        this.socketLogs = zeromq_1.socket('push');
+        this.socketLogs.bindSync('ipc://logs.ips');
     }
     setupServer(config) {
         this.config = config;
