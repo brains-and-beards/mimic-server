@@ -234,8 +234,8 @@ class App {
       if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
         const response = this.forwardRequest(req, res);
       } else {
-        this.sendLog(req, false, LogTypes.RESPONSE, 200);
-        res.status(200).send('RESPONSE'); // TODO: Add mock response
+        this.sendLog(req, false, LogTypes.RESPONSE, 404);
+        res.status(404).send('Not found');
       }
     });
   }
