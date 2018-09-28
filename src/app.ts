@@ -21,6 +21,7 @@ export const enum LogTypes {
   SERVER,
   REQUEST,
   RESPONSE,
+  ERROR,
 }
 
 interface ILog {
@@ -258,8 +259,12 @@ class App {
   private forwardRequest(req: express.Request, responseStream: express.Response) {
     const options = this.getForwardingOptions(req);
 
-    request(options, (_error, response, body) => {
-      this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 418, body);
+    request(options, (error, response, body) => {
+      if (error) {
+        this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
+      } else {
+        this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 418, body);
+      }
     }).pipe(responseStream);
   }
 }
