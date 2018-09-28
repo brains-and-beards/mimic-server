@@ -231,7 +231,7 @@ class App {
       const projectName = req.originalUrl.split('/')[1];
       const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
-      if (project && project.fallbackUrlPrefix) {
+      if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
         const response = this.forwardRequest(req, res);
       } else {
         this.sendLog(req, false, LogTypes.RESPONSE, 200);
