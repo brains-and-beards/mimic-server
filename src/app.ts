@@ -21,6 +21,7 @@ export const enum LogTypes {
   SERVER,
   REQUEST,
   RESPONSE,
+  ERROR,
 }
 
 interface ILog {
@@ -230,11 +231,11 @@ class App {
       const projectName = req.originalUrl.split('/')[1];
       const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
-      if (project && project.fallbackUrlPrefix) {
+      if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
         const response = this.forwardRequest(req, res);
       } else {
-        this.sendLog(req, false, LogTypes.RESPONSE, 200);
-        res.status(200).send('RESPONSE'); // TODO: Add mock response
+        this.sendLog(req, false, LogTypes.RESPONSE, 404);
+        res.status(404).send('Not found');
       }
     });
   }
@@ -258,8 +259,12 @@ class App {
   private forwardRequest(req: express.Request, responseStream: express.Response) {
     const options = this.getForwardingOptions(req);
 
-    request(options, (_error, response, body) => {
-      this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 418, body);
+    request(options, (error, response, body) => {
+      if (error) {
+        this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
+      } else {
+        this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 418, body);
+      }
     }).pipe(responseStream);
   }
 }
