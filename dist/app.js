@@ -142,7 +142,6 @@ class App {
         this.socketLogs.send(JSON.stringify(log));
     }
     register(endpoint, scope = '') {
-        console.log('REGISTERING', endpoint.path, ' WITH ', endpoint.statusCode);
         const path = '/' + scope + endpoint.path;
         const method = endpoint.method.toLowerCase();
         const statusCode = endpoint.statusCode || 200;
@@ -157,7 +156,7 @@ class App {
             else {
                 response.send(responseBody);
             }
-            this.sendLog(req, true, 1 /* REQUEST */, 200);
+            this.sendLog(req, true, 1 /* REQUEST */, statusCode);
         });
     }
     substituteParams(resp, params) {
