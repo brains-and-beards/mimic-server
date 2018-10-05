@@ -209,7 +209,7 @@ class App {
         response.send(responseBody);
       }
 
-      this.sendLog(req, true, LogTypes.REQUEST, 200);
+      this.sendLog(req, true, LogTypes.REQUEST, statusCode);
     });
   }
 
