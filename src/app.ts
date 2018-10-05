@@ -200,12 +200,13 @@ class App {
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
-      const response = this.substituteParams(endpoint.response, req.params);
+      const responseBody = this.substituteParams(endpoint.response, req.params);
+      const response = res.status(statusCode);
 
       if (timeout > 0) {
-        setTimeout(() => res.status(statusCode).send(response), timeout);
+        setTimeout(() => response.send(responseBody), timeout);
       } else {
-        res.send(response);
+        response.send(responseBody);
       }
 
       this.sendLog(req, true, LogTypes.REQUEST, 200);
