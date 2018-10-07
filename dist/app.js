@@ -148,14 +148,15 @@ class App {
         const timeout = endpoint.timeout || 0;
         const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
         httpMethodListenerFunction(path, (req, res) => {
-            const response = this.substituteParams(endpoint.response, req.params);
+            const responseBody = this.substituteParams(endpoint.response, req.params);
+            const response = res.status(statusCode);
             if (timeout > 0) {
-                setTimeout(() => res.status(statusCode).send(response), timeout);
+                setTimeout(() => response.send(responseBody), timeout);
             }
             else {
-                res.send(response);
+                response.send(responseBody);
             }
-            this.sendLog(req, true, 1 /* REQUEST */, 200);
+            this.sendLog(req, true, 1 /* REQUEST */, statusCode);
         });
     }
     substituteParams(resp, params) {
