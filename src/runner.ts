@@ -2,9 +2,10 @@
 import commander from 'commander';
 
 import Server from './server';
+import pkg from '../package.json';
 
 commander
-  .version('0.0.1', '-v, --version')
+  .version(pkg.version, '-v, --version')
   .option('-c, --config <path>', 'Path to config file')
   .parse(process.argv);
 
