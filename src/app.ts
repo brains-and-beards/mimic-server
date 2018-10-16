@@ -200,31 +200,16 @@ class App {
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
-      const responseBody = this.substituteParams(endpoint.response, req.params);
       const response = res.status(statusCode);
 
       if (timeout > 0) {
-        setTimeout(() => response.send(responseBody), timeout);
+        setTimeout(() => response.send(endpoint.response), timeout);
       } else {
-        response.send(responseBody);
+        response.send(endpoint.response);
       }
 
       this.sendLog(req, true, LogTypes.REQUEST, statusCode);
     });
-  }
-
-  private substituteParams(resp: any, params: any): any {
-    for (const i in resp) {
-      // Check nested objects recursively
-      if (typeof resp[i] === 'object') {
-        resp[i] = this.substituteParams(resp[i], params);
-      } else if (typeof resp[i] === 'string' && resp[i][0] === ':') {
-        // If value starts with a colon, substitute it with param value
-        const paramName = resp[i].slice(1);
-        resp[i] = params[paramName];
-      }
-    }
-    return resp;
   }
 
   private addMissedRouteHandler() {
