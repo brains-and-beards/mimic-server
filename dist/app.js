@@ -89,10 +89,10 @@ class App {
         };
         this.setupServer(this.config);
         this.socket = zeromq_1.socket('pull');
-        this.socket.connect('ipc://server_commands.ipc');
+        this.socket.connect('ipc:///tmp/apimocker_server/commands.ipc');
         this.socket.on('message', this.handleUIMessage);
         this.socketLogs = zeromq_1.socket('push');
-        this.socketLogs.bindSync('ipc://logs.ips');
+        this.socketLogs.bindSync('ipc:///tmp/apimocker_server/logs.ipc');
     }
     setupServer(config) {
         this.config = config;
