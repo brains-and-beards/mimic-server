@@ -1,6 +1,6 @@
 {
   "name": "apimockerserver",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "APIMocker Server",
   "scripts": {
     "start": "yarn run serve",
