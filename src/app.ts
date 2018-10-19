@@ -60,12 +60,15 @@ class App {
   constructor() {
     this.setupServer(this.config);
 
+    const socketsDir = '/tmp/apimocker_server';
+    if (!fs.existsSync(socketsDir)) fs.mkdirSync(socketsDir);
+
     this.socket = socket('pull');
-    this.socket.connect('ipc:///tmp/apimocker_server/commands.ipc');
+    this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
     this.socket.on('message', this.handleUIMessage);
 
     this.socketLogs = socket('push');
-    this.socketLogs.bindSync('ipc:///tmp/apimocker_server/logs.ipc');
+    this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
   }
 
   setupServer(config: IConfig) {
