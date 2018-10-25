@@ -196,23 +196,60 @@ class App {
   }
 
   private register(endpoint: IEndpoint, scope = ''): void {
+    const query = endpoint.request.params;
     const path = '/' + scope + endpoint.path;
     const method = endpoint.method.toLowerCase();
     const statusCode = endpoint.statusCode || 200;
     const timeout = endpoint.timeout || 0;
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
-    httpMethodListenerFunction(path, (req: express.Request, res: any) => {
+    httpMethodListenerFunction(path + query, (req: express.Request, res: any) => {
+      console.log('TCL: App -> req', req);
+      // console.log('TCL: App -> res', res);
+      // console.log('TCL: App -> req', req);
+      console.log('!!!!!!!!!!!!!!!!!!!!!!!!!routes ->', this.express._router.stack);
+      this.express._router.stack.forEach((r: any) => {
+        if (r.route && r.route.path) {
+          console.log(r.route.path);
+          console.log(r.route.params);
+        }
+      });
+      // console.log('TCL: App -> path', path);
+      console.log('TCL: App -> endpoint', endpoint);
+
       const response = res.status(statusCode);
-
-      if (timeout > 0) {
-        setTimeout(() => response.send(endpoint.response), timeout);
+      if (query) {
+        // console.log('TCL: App -> query', query);
+        if (_.isEqual(this.parseQuery(query), req.query)) {
+          this.sendResponse(timeout, response, endpoint.response);
+          this.sendLog(req, true, LogTypes.REQUEST, statusCode);
+        } else {
+          this.sendResponse(timeout, response, 'Not found');
+          this.sendLog(req, true, LogTypes.REQUEST, 404);
+        }
       } else {
-        response.send(endpoint.response);
+        this.sendResponse(timeout, response, endpoint.response);
+        this.sendLog(req, true, LogTypes.REQUEST, statusCode);
       }
-
-      this.sendLog(req, true, LogTypes.REQUEST, statusCode);
     });
+  }
+
+  private sendResponse(timeout: number, response: any, endpointResponse: any) {
+    if (timeout > 0) {
+      setTimeout(() => response.send(endpointResponse), timeout);
+    } else {
+      response.send(endpointResponse);
+    }
+  }
+
+  private parseQuery(queryString: string) {
+    const query: any = {};
+    const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+    for (const item of pairs) {
+      const pair: any = item.split('=');
+      query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+    }
+    return query;
   }
 
   private addMissedRouteHandler() {
