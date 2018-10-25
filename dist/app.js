@@ -19,6 +19,8 @@ class App {
             entities: { endpoints: [], projects: [] },
             result: { httpPort: 3000, httpsPort: 3001 },
         };
+        this.endpointsParams = new Map();
+        this.endpointsResponse = new Map();
         this.isListening = () => {
             return this.httpServer ? this.httpServer.listening : false;
         };
@@ -111,6 +113,19 @@ class App {
         lodash_1.default.forEach(endpoints, (endpoint) => {
             const project = projects[endpoint.projectId];
             this.register(endpoint, project.name);
+            const endpointPath = '/' + project.name + endpoint.path;
+            const values = this.endpointsParams.get(endpointPath);
+            this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
+            if (values && values.length > 0) {
+                const params = values;
+                params.push(endpoint.request.params);
+                this.endpointsParams.set(endpointPath, params);
+            }
+            else {
+                const params = [];
+                params.push(endpoint.request.params);
+                this.endpointsParams.set(endpointPath, params);
+            }
         });
         this.addMissedRouteHandler();
     }
@@ -152,23 +167,18 @@ class App {
         const timeout = endpoint.timeout || 0;
         const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
         httpMethodListenerFunction(path + query, (req, res) => {
-            console.log('TCL: App -> req', req);
-            // console.log('TCL: App -> res', res);
-            // console.log('TCL: App -> req', req);
-            console.log('!!!!!!!!!!!!!!!!!!!!!!!!!routes ->', this.express._router.stack);
-            this.express._router.stack.forEach((r) => {
-                if (r.route && r.route.path) {
-                    console.log(r.route.path);
-                    console.log(r.route.params);
-                }
-            });
-            // console.log('TCL: App -> path', path);
-            console.log('TCL: App -> endpoint', endpoint);
             const response = res.status(statusCode);
-            if (query) {
-                // console.log('TCL: App -> query', query);
-                if (lodash_1.default.isEqual(this.parseQuery(query), req.query)) {
-                    this.sendResponse(timeout, response, endpoint.response);
+            if (req.query && !lodash_1.default.isEmpty(req.query)) {
+                const paramsForEndpoint = this.endpointsParams.get(req.path);
+                console.log('TCL: App -> paramsForEndpoint', paramsForEndpoint);
+                let paramExists = false;
+                paramsForEndpoint.forEach((param) => {
+                    if (lodash_1.default.isEqual(this.parseQuery(param), req.query)) {
+                        paramExists = true;
+                    }
+                });
+                if (paramExists) {
+                    this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query)));
                     this.sendLog(req, true, 1 /* REQUEST */, statusCode);
                 }
                 else {
@@ -177,7 +187,7 @@ class App {
                 }
             }
             else {
-                this.sendResponse(timeout, response, endpoint.response);
+                this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path));
                 this.sendLog(req, true, 1 /* REQUEST */, statusCode);
             }
         });
@@ -191,13 +201,27 @@ class App {
         }
     }
     parseQuery(queryString) {
-        const query = {};
-        const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
-        for (const item of pairs) {
-            const pair = item.split('=');
-            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        if (queryString.length > 0) {
+            const query = {};
+            const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+            for (const item of pairs) {
+                const pair = item.split('=');
+                query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+            }
+            return query;
         }
-        return query;
+        else {
+            return {};
+        }
+    }
+    parseQueryToString(obj) {
+        return ('?' +
+            Object.keys(obj)
+                .reduce((a, k) => {
+                a.push(k + '=' + encodeURIComponent(obj[k]));
+                return a;
+            }, [])
+                .join('&'));
     }
     addMissedRouteHandler() {
         this.express.use('/', (req, res, next) => {
