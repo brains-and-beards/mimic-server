@@ -56,6 +56,8 @@ class App {
   private sslServer?: HTTPS.Server;
   private socket: any;
   private socketLogs: any;
+  private endpointsParams = new Map<string, any>();
+  private endpointsResponse = new Map<string, any>();
 
   constructor() {
     this.setupServer(this.config);
@@ -163,6 +165,19 @@ class App {
     _.forEach(endpoints, (endpoint: IEndpoint) => {
       const project = projects[endpoint.projectId];
       this.register(endpoint, project.name);
+      const endpointPath = '/' + project.name + endpoint.path;
+      const values = this.endpointsParams.get(endpointPath);
+      this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
+
+      if (values && values.length > 0) {
+        const params = values;
+        params.push(endpoint.request.params);
+        this.endpointsParams.set(endpointPath, params);
+      } else {
+        const params = [];
+        params.push(endpoint.request.params);
+        this.endpointsParams.set(endpointPath, params);
+      }
     });
     this.addMissedRouteHandler();
   }
@@ -196,6 +211,7 @@ class App {
   }
 
   private register(endpoint: IEndpoint, scope = ''): void {
+    const query = endpoint.request.params;
     const path = '/' + scope + endpoint.path;
     const method = endpoint.method.toLowerCase();
     const statusCode = endpoint.statusCode || 200;
@@ -205,14 +221,64 @@ class App {
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const response = res.status(statusCode);
 
-      if (timeout > 0) {
-        setTimeout(() => response.send(endpoint.response), timeout);
+      if (req.query && !_.isEmpty(req.query)) {
+        const paramsForEndpoint = this.endpointsParams.get(req.path);
+        let paramExists = false;
+        paramsForEndpoint.forEach((param: string) => {
+          if (_.isEqual(this.parseQuery(param), req.query)) {
+            paramExists = true;
+          }
+        });
+        if (paramExists) {
+          this.sendResponse(
+            timeout,
+            response,
+            this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query))
+          );
+          this.sendLog(req, true, LogTypes.REQUEST, statusCode);
+        } else {
+          this.sendResponse(timeout, response, 'Not found');
+          this.sendLog(req, true, LogTypes.REQUEST, 404);
+        }
       } else {
-        response.send(endpoint.response);
+        this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path));
+        this.sendLog(req, true, LogTypes.REQUEST, statusCode);
       }
-
-      this.sendLog(req, true, LogTypes.REQUEST, statusCode);
     });
+  }
+
+  private sendResponse(timeout: number, response: any, endpointResponse: any) {
+    if (timeout > 0) {
+      setTimeout(() => response.send(endpointResponse), timeout);
+    } else {
+      response.send(endpointResponse);
+    }
+  }
+
+  private parseQuery(queryString: string) {
+    if (queryString.length > 0) {
+      const query: any = {};
+      const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
+      for (const item of pairs) {
+        const pair: any = item.split('=');
+        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+      }
+      return query;
+    } else {
+      return {};
+    }
+  }
+
+  private parseQueryToString(obj: any) {
+    return (
+      '?' +
+      Object.keys(obj)
+        .reduce((a: any, k: string) => {
+          a.push(k + '=' + encodeURIComponent(obj[k]));
+          return a;
+        }, [])
+        .join('&')
+    );
   }
 
   private addMissedRouteHandler() {

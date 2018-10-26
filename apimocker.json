@@ -1,16 +1,11 @@
 {
-  "version": "0.0.1",
   "httpPort": "3000",
   "httpsPort": "3001",
   "projects": [
     {
       "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7ead2b8",
       "name": "Nata123lia",
-      "fallbackUrlPrefix": {
-        "domain": "haikuco.de",
-        "port": "80",
-        "path": "/blog"
-      },
+      "fallbackUrlPrefix": { "domain": "haikuco.de", "port": "80", "path": "/blog" },
       "endpoints": [
         {
           "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b8",
@@ -34,10 +29,10 @@
         },
         {
           "uuid": "9cf63f90-93ce-11e8-9820-ad3aeb80f7df",
-          "path": "/wwwwwoqoq",
+          "path": "/",
           "method": "GET",
           "response": { "errors": "An unknown error has occured. Blame me." },
-          "request": { "body": {}, "params": "" },
+          "request": { "body": {}, "params": "?hehe=2&lala=2" },
           "statusCode": 400,
           "timeout": 0,
           "initialized": true
@@ -61,8 +56,76 @@
           "statusCode": 200,
           "timeout": 111,
           "initialized": true
+        },
+        {
+          "uuid": "5932b4c0-d616-11e8-89f6-a551413c743b",
+          "path": "/ewew",
+          "method": "GET",
+          "response": {},
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": false
         }
       ]
+    },
+    {
+      "uuid": "7088acb0-d616-11e8-b6fb-555fa73c0bbd",
+      "name": "nowy",
+      "endpoints": [
+        {
+          "uuid": "71ac9340-d616-11e8-b6fb-555fa73c0bbd",
+          "path": "/dddd",
+          "method": "GET",
+          "response": {},
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "79bb6930-d616-11e8-b6fb-555fa73c0bbd",
+          "path": "/a",
+          "method": "GET",
+          "response": { "hey": "I am working" },
+          "request": { "body": {}, "params": "?para=2" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "f91f1af0-d616-11e8-8e8b-af224076217e",
+          "path": "/a",
+          "method": "GET",
+          "response": { "single": "forever alone" },
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "2d8e9130-d617-11e8-8e8b-af224076217e",
+          "path": "/a",
+          "method": "POST",
+          "response": {},
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "762e2e50-d617-11e8-8b83-3fb282517a21",
+          "path": "/",
+          "method": "GET",
+          "response": {},
+          "request": { "body": {}, "params": "?koko=2" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        }
+      ],
+      "fallbackUrlPrefix": { "domain": "", "path": "", "port": "" }
     }
-  ]
+  ],
+  "version": "1.0"
 }
