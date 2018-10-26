@@ -58,15 +58,20 @@ class Server {
       });
   };
 
-  private restartServer = (config: IConfig) => {
-    if (this.app.isListening()) {
+  private stopServer = (callback?: () => any) => {
+    if (this.app)
       this.app.stop(error => {
         if (error) {
           console.error(error);
         } else {
-          this._startServer(config);
+          if (callback) callback();
         }
       });
+  };
+
+  private restartServer = (config: IConfig) => {
+    if (this.app.isListening()) {
+      this.stopServer(() => this._startServer(config));
     } else {
       this._startServer(config);
     }
