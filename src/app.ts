@@ -218,7 +218,7 @@ class App {
     const timeout = endpoint.timeout || 0;
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
-    httpMethodListenerFunction(path + query, (req: express.Request, res: any) => {
+    httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const response = res.status(statusCode);
 
       if (req.query && !_.isEmpty(req.query)) {

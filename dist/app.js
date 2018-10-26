@@ -166,11 +166,10 @@ class App {
         const statusCode = endpoint.statusCode || 200;
         const timeout = endpoint.timeout || 0;
         const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
-        httpMethodListenerFunction(path + query, (req, res) => {
+        httpMethodListenerFunction(path, (req, res) => {
             const response = res.status(statusCode);
             if (req.query && !lodash_1.default.isEmpty(req.query)) {
                 const paramsForEndpoint = this.endpointsParams.get(req.path);
-                console.log('TCL: App -> paramsForEndpoint', paramsForEndpoint);
                 let paramExists = false;
                 paramsForEndpoint.forEach((param) => {
                     if (lodash_1.default.isEqual(this.parseQuery(param), req.query)) {
