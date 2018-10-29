@@ -20,6 +20,7 @@ class App {
             result: { httpPort: 3000, httpsPort: 3001 },
         };
         this.endpointsParams = new Map();
+        this.endpointsBody = new Map();
         this.endpointsResponse = new Map();
         this.isListening = () => {
             return this.httpServer ? this.httpServer.listening : false;
@@ -114,20 +115,45 @@ class App {
             const project = projects[endpoint.projectId];
             this.register(endpoint, project.name);
             const endpointPath = '/' + project.name + endpoint.path;
-            const values = this.endpointsParams.get(endpointPath);
-            this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
-            if (values && values.length > 0) {
-                const params = values;
-                params.push(endpoint.request.params);
-                this.endpointsParams.set(endpointPath, params);
+            if (endpoint.request.params) {
+                this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
+            }
+            else if (endpoint.request.body && !lodash_1.default.isEqual(endpoint.request.body, {})) {
+                this.endpointsResponse.set(endpoint.method + endpointPath + JSON.stringify(endpoint.request.body), endpoint.response);
             }
             else {
-                const params = [];
-                params.push(endpoint.request.params);
-                this.endpointsParams.set(endpointPath, params);
+                this.endpointsResponse.set(endpoint.method + endpointPath, endpoint.response);
             }
+            this.parseParamsEndpoint(endpoint, endpointPath);
+            this.parseBodyEndpoint(endpoint, endpointPath);
         });
         this.addMissedRouteHandler();
+    }
+    parseParamsEndpoint(endpoint, endpointPath) {
+        const paramsValues = this.endpointsParams.get(endpointPath);
+        if (paramsValues && paramsValues.length > 0) {
+            const params = paramsValues;
+            params.push(endpoint.request.params);
+            this.endpointsParams.set(endpointPath, params);
+        }
+        else {
+            const params = [];
+            params.push(endpoint.request.params);
+            this.endpointsParams.set(endpointPath, params);
+        }
+    }
+    parseBodyEndpoint(endpoint, endpointPath) {
+        const bodyValues = this.endpointsBody.get(endpointPath);
+        if (bodyValues && bodyValues.length > 0) {
+            const bodyArray = bodyValues;
+            bodyArray.push(endpoint.request.body);
+            this.endpointsBody.set(endpointPath, bodyArray);
+        }
+        else {
+            const bodyArray = [];
+            bodyArray.push(endpoint.request.body);
+            this.endpointsBody.set(endpointPath, bodyArray);
+        }
     }
     getAppropriateListenerFunction(method) {
         if (method === 'delete')
@@ -160,7 +186,6 @@ class App {
         this.socketLogs.send(JSON.stringify(log));
     }
     register(endpoint, scope = '') {
-        const query = endpoint.request.params;
         const path = '/' + scope + endpoint.path;
         const method = endpoint.method.toLowerCase();
         const statusCode = endpoint.statusCode || 200;
@@ -169,35 +194,79 @@ class App {
         httpMethodListenerFunction(path, (req, res) => {
             const response = res.status(statusCode);
             if (req.query && !lodash_1.default.isEmpty(req.query)) {
-                const paramsForEndpoint = this.endpointsParams.get(req.path);
-                let paramExists = false;
-                paramsForEndpoint.forEach((param) => {
-                    if (lodash_1.default.isEqual(this.parseQuery(param), req.query)) {
-                        paramExists = true;
-                    }
-                });
+                const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
                 if (paramExists) {
-                    this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query)));
-                    this.sendLog(req, true, 1 /* REQUEST */, statusCode);
+                    this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query)), req, statusCode);
                 }
                 else {
-                    this.sendResponse(timeout, response, 'Not found');
-                    this.sendLog(req, true, 1 /* REQUEST */, 404);
+                    this.sendResponse(timeout, response, 'Not found', req, 404);
+                }
+            }
+            else if (req.body && !lodash_1.default.isEmpty(req.body)) {
+                const requestBody = req.body.toString('utf8');
+                const bodyExists = this.bodyExists(this.endpointsBody.get(req.path), requestBody);
+                if (bodyExists) {
+                    if (this.isJsonString(requestBody)) {
+                        this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody))), req, statusCode);
+                    }
+                    else {
+                        this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path + requestBody), req, statusCode);
+                    }
+                }
+                else {
+                    this.sendResponse(timeout, response, 'Not found', req, 404);
                 }
             }
             else {
-                this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path));
-                this.sendLog(req, true, 1 /* REQUEST */, statusCode);
+                this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path), req, statusCode);
             }
         });
     }
-    sendResponse(timeout, response, endpointResponse) {
+    isJsonString(str) {
+        try {
+            JSON.parse(str);
+        }
+        catch (e) {
+            return false;
+        }
+        return true;
+    }
+    bodyExists(bodyForEndpoint, requestBody) {
+        let bodyExists = false;
+        bodyForEndpoint.forEach((body) => {
+            if (this.isJsonString(requestBody)) {
+                if (lodash_1.default.isEqual(requestBody, {}) && lodash_1.default.isEqual(body, requestBody)) {
+                    bodyExists = true;
+                }
+                else if (lodash_1.default.isEqual(body, JSON.parse(requestBody))) {
+                    bodyExists = true;
+                }
+            }
+            else {
+                if (lodash_1.default.isEqual(body, requestBody)) {
+                    bodyExists = true;
+                }
+            }
+        });
+        return bodyExists;
+    }
+    paramsExists(paramsForEndpoint, req) {
+        let paramExists = false;
+        paramsForEndpoint.forEach((param) => {
+            if (lodash_1.default.isEqual(this.parseQuery(param), req.query)) {
+                paramExists = true;
+            }
+        });
+        return paramExists;
+    }
+    sendResponse(timeout, response, endpointResponse, req, statusCode) {
         if (timeout > 0) {
-            setTimeout(() => response.send(endpointResponse), timeout);
+            setTimeout(() => response.status(statusCode).send(endpointResponse), timeout);
         }
         else {
-            response.send(endpointResponse);
+            response.status(statusCode).send(endpointResponse);
         }
+        this.sendLog(req, true, 1 /* REQUEST */, statusCode);
     }
     parseQuery(queryString) {
         if (queryString.length > 0) {

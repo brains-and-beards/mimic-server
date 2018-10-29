@@ -1,5 +1,6 @@
 export class ErrorHandler {
   static checkErrorAndStopProcess(error: any) {
+    // tslint:disable-next-line:no-console
     if (error.code && error.code === 'ENOENT' && error.path && error.path.indexOf('apimocker.json')) {
       console.error('Error - code 20 - config file is not present');
       process.exit(20);
