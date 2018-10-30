@@ -5,15 +5,18 @@ import { promisify } from 'util';
 
 import App from './app';
 import { ConfigSchema } from './Models/DataSchema';
-import { ErrorHandler } from './errors/error-handler';
+import ErrorHandler from './errors/error-handler';
 
 class Server {
   readFileAsync = promisify(fs.readFile);
   configFilePath: string;
   app: App;
+  errorHandler: ErrorHandler;
 
-  constructor(filename: string) {
-    this.app = new App();
+  constructor(filename: string, handleErrors?: (code?: number) => void) {
+    this.errorHandler = new ErrorHandler(handleErrors);
+    this.app = new App(this.errorHandler);
+
     if (!filename) {
       this.configFilePath = './apimocker.json';
     } else {
@@ -53,20 +56,25 @@ class Server {
         this.restartServer(config);
       })
       .catch(error => {
-        ErrorHandler.checkErrorAndStopProcess(error);
-        process.exit();
+        this.errorHandler.checkErrorAndStopProcess(error);
+        this.stopServer();
+      });
+  };
+
+  private stopServer = (callback?: () => any) => {
+    if (this.app)
+      this.app.stop(error => {
+        if (error) {
+          console.error(error);
+        } else {
+          if (callback) callback();
+        }
       });
   };
 
   private restartServer = (config: IConfig) => {
     if (this.app.isListening()) {
-      this.app.stop(error => {
-        if (error) {
-          console.error(error);
-        } else {
-          this._startServer(config);
-        }
-      });
+      this.stopServer(() => this._startServer(config));
     } else {
       this._startServer(config);
     }

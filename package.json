@@ -1,10 +1,10 @@
 {
   "name": "apimockerserver",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "APIMocker Server",
   "scripts": {
     "start": "yarn run serve",
-    "build": "yarn run build-ts && yarn run tslint",
+    "build": "yarn gulp compile && yarn run tslint",
     "serve": "node dist/runner.js",
     "watch-node": "nodemon dist/runner.js",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
@@ -39,6 +39,9 @@
     "@types/express": "^4.16.0",
     "@types/node": "^10.5.2",
     "concurrently": "^3.6.0",
+    "gulp": "^3.9.1",
+    "gulp-typescript": "^5.0.0-alpha.3",
+    "gulp-uglify-es": "^1.0.4",
     "jest": "^23.4.1",
     "nodemon": "^1.18.2",
     "ts-jest": "^23.0.1",
@@ -50,14 +53,14 @@
   "dependencies": {
     "@types/lodash": "^4.14.116",
     "@types/normalizr": "^2.0.18",
-    "@types/zeromq": "^4.6.1",
     "@types/request": "^2.47.1",
+    "@types/zeromq": "^4.6.1",
     "commander": "^2.16.0",
     "express": "^4.16.3",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
     "normalizr": "^3.2.4",
-    "zeromq": "^4.6.0",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "zeromq": "^4.6.0"
   }
 }

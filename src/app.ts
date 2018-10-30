@@ -8,7 +8,7 @@ import { socket } from 'zeromq';
 import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
-import { ErrorHandler } from './errors/error-handler';
+import ErrorHandler from './errors/error-handler';
 
 export const enum MessageTypes {
   STOP,
@@ -56,15 +56,18 @@ class App {
   private sslServer?: HTTPS.Server;
   private socket: any;
   private socketLogs: any;
+  private errorHandler: ErrorHandler;
   private endpointsParams = new Map<string, any>();
   private endpointsBody = new Map<string, any>();
   private endpointsResponse = new Map<string, any>();
 
-  constructor() {
+  constructor(errorHandler: ErrorHandler) {
     this.setupServer(this.config);
 
     const socketsDir = '/tmp/apimocker_server';
     if (!fs.existsSync(socketsDir)) fs.mkdirSync(socketsDir);
+
+    this.errorHandler = errorHandler;
 
     this.socket = socket('pull');
     this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
@@ -124,7 +127,7 @@ class App {
 
     this.httpServer = HTTP.createServer(this.express);
     this.httpServer.listen(this.port, afterStart).on('error', (error: any) => {
-      ErrorHandler.checkErrorAndStopProcess(error);
+      this.errorHandler.checkErrorAndStopProcess(error);
     });
 
     if (fs.existsSync('./localhost.key') && fs.existsSync('./localhost.crt')) {
