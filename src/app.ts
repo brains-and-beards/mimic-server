@@ -321,7 +321,13 @@ class App {
       if (error) {
         this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
       } else {
-        this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 418, body);
+        this.sendLog(
+          req,
+          true,
+          LogTypes.RESPONSE,
+          response && response.statusCode ? response.statusCode : 418,
+          body.toString()
+        );
       }
     }).pipe(responseStream);
   }
