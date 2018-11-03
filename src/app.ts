@@ -167,22 +167,22 @@ class App {
     const { endpoints, projects } = this.config.entities;
     _.forEach(endpoints, (endpoint: IEndpoint) => {
       const project = projects[endpoint.projectId];
-      this.register(endpoint, project.name);
       const endpointPath = '/' + project.name + endpoint.path;
-      const values = this.endpointsParams.get(endpointPath);
+
+      this.register(endpoint, project.name);
       this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
 
-      if (values && values.length > 0) {
-        const params = values;
-        params.push(endpoint.request.params);
-        this.endpointsParams.set(endpointPath, params);
-      } else {
-        const params = [];
-        params.push(endpoint.request.params);
-        this.endpointsParams.set(endpointPath, params);
-      }
+      const existingEndpointParams = this.endpointsParams.get(endpointPath);
+      const params = existingEndpointParams && existingEndpointParams.length > 0 ? existingEndpointParams : [];
+
+      params.push(endpoint.request.params);
+      this.endpointsParams.set(endpointPath, params);
     });
-    this.addMissedRouteHandler();
+
+    // Handle non-mocked routes
+    this.express.use('/', (req: express.Request, res: any, _next: any) => {
+      this.handleMissedRoute(req, res);
+    });
   }
 
   private getAppropriateListenerFunction(method: string): express.IRouterMatcher<express.Express> {
@@ -226,12 +226,14 @@ class App {
 
       if (req.query && !_.isEmpty(req.query)) {
         const paramsForEndpoint = this.endpointsParams.get(req.path);
-        let paramExists = false;
+
+        var paramExists = false;
         paramsForEndpoint.forEach((param: string) => {
           if (_.isEqual(this.parseQuery(param), req.query)) {
             paramExists = true;
           }
         });
+
         if (paramExists) {
           this.sendResponse(
             timeout,
@@ -240,8 +242,7 @@ class App {
           );
           this.sendLog(req, true, LogTypes.REQUEST, statusCode);
         } else {
-          this.sendResponse(timeout, response, 'Not found');
-          this.sendLog(req, true, LogTypes.REQUEST, 404);
+          this.handleMissedRoute(req, res);
         }
       } else {
         this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path));
@@ -284,18 +285,16 @@ class App {
     );
   }
 
-  private addMissedRouteHandler() {
-    this.express.use('/', (req: express.Request, res: any, next: any) => {
-      const projectName = req.originalUrl.split('/')[1];
-      const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+  private handleMissedRoute(request: express.Request, response: express.Response) {
+    const projectName = request.originalUrl.split('/')[1];
+    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
-      if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
-        const response = this.forwardRequest(req, res);
-      } else {
-        this.sendLog(req, false, LogTypes.RESPONSE, 404);
-        res.status(404).send('Not found');
-      }
-    });
+    if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
+      this.forwardRequest(request, response);
+    } else {
+      this.sendLog(request, false, LogTypes.RESPONSE, 404);
+      response.status(404).send('Not found');
+    }
   }
 
   private getForwardingOptions(req: express.Request) {
