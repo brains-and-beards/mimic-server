@@ -227,7 +227,7 @@ class App {
       if (req.query && !_.isEmpty(req.query)) {
         const paramsForEndpoint = this.endpointsParams.get(req.path);
 
-        var paramExists = false;
+        let paramExists = false;
         paramsForEndpoint.forEach((param: string) => {
           if (_.isEqual(this.parseQuery(param), req.query)) {
             paramExists = true;
@@ -285,14 +285,14 @@ class App {
     );
   }
 
-  private handleMissedRoute(request: express.Request, response: express.Response) {
-    const projectName = request.originalUrl.split('/')[1];
+  private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
+    const projectName = apiRequest.originalUrl.split('/')[1];
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
     if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
-      this.forwardRequest(request, response);
+      this.forwardRequest(apiRequest, response);
     } else {
-      this.sendLog(request, false, LogTypes.RESPONSE, 404);
+      this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
       response.status(404).send('Not found');
     }
   }
