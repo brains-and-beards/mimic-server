@@ -171,16 +171,7 @@ class App {
       const endpointPath = '/' + project.name + endpoint.path;
 
       this.register(endpoint, project.name);
-      if (endpoint.request.params) {
-        this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
-      } else if (endpoint.request.body && !_.isEqual(endpoint.request.body, {})) {
-        this.endpointsResponse.set(
-          endpoint.method + endpointPath + JSON.stringify(endpoint.request.body),
-          endpoint.response
-        );
-      } else {
-        this.endpointsResponse.set(endpoint.method + endpointPath, endpoint.response);
-      }
+      this.parseEndpointResponse(endpoint, endpointPath);
       this.parseParamsEndpoint(endpoint, endpointPath);
       this.parseBodyEndpoint(endpoint, endpointPath);
     });
@@ -189,6 +180,19 @@ class App {
     this.express.use('/', (req: express.Request, res: any, _next: any) => {
       this.handleMissedRoute(req, res);
     });
+  }
+
+  private parseEndpointResponse(endpoint: IEndpoint, endpointPath: string) {
+    if (endpoint.request.params) {
+      this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
+    } else if (endpoint.request.body && !_.isEqual(endpoint.request.body, {})) {
+      this.endpointsResponse.set(
+        endpoint.method + endpointPath + JSON.stringify(endpoint.request.body),
+        endpoint.response
+      );
+    } else {
+      this.endpointsResponse.set(endpoint.method + endpointPath, endpoint.response);
+    }
   }
 
   private parseParamsEndpoint(endpoint: IEndpoint, endpointPath: string) {
@@ -202,15 +206,9 @@ class App {
   private parseBodyEndpoint(endpoint: IEndpoint, endpointPath: string) {
     const bodyValues = this.endpointsBody.get(endpointPath);
 
-    if (bodyValues && bodyValues.length > 0) {
-      const bodyArray = bodyValues;
-      bodyArray.push(endpoint.request.body);
-      this.endpointsBody.set(endpointPath, bodyArray);
-    } else {
-      const bodyArray = [];
-      bodyArray.push(endpoint.request.body);
-      this.endpointsBody.set(endpointPath, bodyArray);
-    }
+    const bodyArray = bodyValues && bodyValues.length > 0 ? bodyValues : [];
+    bodyArray.push(endpoint.request.body);
+    this.endpointsBody.set(endpointPath, bodyArray);
   }
 
   private getAppropriateListenerFunction(method: string): express.IRouterMatcher<express.Express> {
@@ -250,50 +248,69 @@ class App {
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const response = res.status(statusCode);
+      const reqBodyExists = req.body && !_.isEmpty(req.body);
+      const reqQueryExists = req.query && !_.isEmpty(req.query);
+      const requestBody = reqBodyExists ? req.body.toString('utf8') : '';
 
-      if (req.query && !_.isEmpty(req.query)) {
-        const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
+      const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
+      const bodyExists = this.bodyExists(this.endpointsBody.get(req.path), requestBody);
 
-        if (paramExists) {
-          this.sendResponse(
-            timeout,
-            response,
-            this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query)),
-            req,
-            statusCode
-          );
-        } else {
-          this.sendResponse(timeout, response, 'Not found', req, 404);
-        }
-      } else if (req.body && !_.isEmpty(req.body)) {
-        const requestBody = req.body.toString('utf8');
-        const bodyExists = this.bodyExists(this.endpointsBody.get(req.path), requestBody);
-
-        if (bodyExists) {
-          if (this.isJsonString(requestBody)) {
-            this.sendResponse(
-              timeout,
-              response,
-              this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody))),
-              req,
-              statusCode
-            );
-          } else {
-            this.sendResponse(
-              timeout,
-              response,
-              this.endpointsResponse.get(req.method + req.path + requestBody),
-              req,
-              statusCode
-            );
-          }
-        } else {
-          this.sendResponse(timeout, response, 'Not found', req, 404);
-        }
+      if (reqQueryExists) {
+        paramExists
+          ? this.sendResponse(timeout, response, req, statusCode, true, true)
+          : this.sendResponse(timeout, response, req, 404, false);
+      } else if (reqBodyExists) {
+        bodyExists
+          ? this.isJsonString(requestBody)
+            ? this.sendResponse(timeout, response, req, statusCode, true, false, true)
+            : this.sendResponse(timeout, response, req, statusCode, true, false, false)
+          : this.sendResponse(timeout, response, req, 404, false);
       } else {
-        this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path), req, statusCode);
+        this.sendRequestResponse(timeout, response, req, statusCode, this.endpointsResponse.get(req.method + req.path));
       }
     });
+  }
+
+  private sendResponse(
+    timeout: number,
+    response: any,
+    req: express.Request,
+    statusCode: number,
+    isResponseExists: boolean,
+    isParamsExists?: boolean,
+    isJsonString?: boolean
+  ) {
+    let endpointResponse: any;
+
+    if (!isResponseExists) {
+      endpointResponse = 'Not found';
+    } else if (isParamsExists) {
+      endpointResponse = this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query));
+    } else {
+      const requestBody = req.body.toString('utf8');
+
+      endpointResponse = isJsonString
+        ? this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody)))
+        : this.endpointsResponse.get(req.method + req.path + requestBody);
+    }
+
+    this.sendRequestResponse(timeout, response, req, statusCode, endpointResponse);
+  }
+
+  private sendRequestResponse(
+    timeout: number,
+    response: any,
+    req: express.Request,
+    statusCode: number,
+    endpointResponse: any
+  ) {
+    if (timeout > 0) {
+      setTimeout(() => response.status(statusCode).send(endpointResponse), timeout);
+    } else {
+      response.status(statusCode).send(endpointResponse);
+    }
+
+    this.sendLog(req, true, LogTypes.REQUEST, statusCode);
   }
 
   private isJsonString(str: any) {
@@ -333,22 +350,6 @@ class App {
     });
 
     return paramExists;
-  }
-
-  private sendResponse(
-    timeout: number,
-    response: any,
-    endpointResponse: any,
-    req: express.Request,
-    statusCode: number
-  ) {
-    if (timeout > 0) {
-      setTimeout(() => response.status(statusCode).send(endpointResponse), timeout);
-    } else {
-      response.status(statusCode).send(endpointResponse);
-    }
-
-    this.sendLog(req, true, LogTypes.REQUEST, statusCode);
   }
 
   private parseQuery(queryString: string) {
