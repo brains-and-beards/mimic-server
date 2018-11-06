@@ -8,7 +8,7 @@
     "serve": "node dist/runner.js",
     "watch-node": "nodemon dist/runner.js",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
-    "test": "jest --forceExit --coverage --verbose",
+    "test": "jest",
     "watch-test": "yarn run test -- --watchAll",
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
@@ -43,9 +43,10 @@
     "gulp": "^3.9.1",
     "gulp-typescript": "^5.0.0-alpha.3",
     "gulp-uglify-es": "^1.0.4",
-    "jest": "^23.4.1",
+    "jest": "23.6.0",
     "nodemon": "^1.18.2",
-    "supertest": "^3.3.0",
+    "supertest": "2.0.1",
+    "supertest-as-promised": "4.0.2",
     "ts-jest": "^23.0.1",
     "ts-node": "^7.0.0",
     "tslint": "^5.11.0",
@@ -63,6 +64,10 @@
     "moment": "^2.22.2",
     "normalizr": "^3.2.4",
     "request": "^2.88.0",
+    "xmlhttprequest": "^1.8.0",
     "zeromq": "^4.6.0"
+  },
+  "jest": {
+    "transform": {".*": "<rootDir>/node_modules/babel-jest"}
   }
 }
