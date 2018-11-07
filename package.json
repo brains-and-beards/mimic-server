@@ -3,7 +3,8 @@
   "version": "0.9.2",
   "description": "APIMocker Server",
   "scripts": {
-    "start": "yarn run serve",
+    "start": "cross-env NODE_ENV=dev yarn run serve",
+    "start-test": "cross-env NODE_ENV=test yarn run serve",
     "build": "yarn gulp compile && yarn run tslint",
     "serve": "node dist/runner.js",
     "watch-node": "nodemon dist/runner.js",
@@ -37,17 +38,20 @@
   "preferGlobal": true,
   "devDependencies": {
     "@types/express": "^4.16.0",
+    "@types/jest": "^23.3.9",
     "@types/node": "^10.5.2",
     "@types/supertest": "^2.0.6",
+    "@types/supertest-as-promised": "^2.0.36",
     "concurrently": "^3.6.0",
+    "cross-env": "^5.2.0",
     "gulp": "^3.9.1",
     "gulp-typescript": "^5.0.0-alpha.3",
     "gulp-uglify-es": "^1.0.4",
     "jest": "23.6.0",
     "nodemon": "^1.18.2",
     "supertest": "2.0.1",
-    "supertest-as-promised": "4.0.2",
-    "ts-jest": "^23.0.1",
+    "supertest-as-promised": "^4.0.2",
+    "ts-jest": "^23.10.4",
     "ts-node": "^7.0.0",
     "tslint": "^5.11.0",
     "tslint-immutable": "^4.6.0",
@@ -68,6 +72,23 @@
     "zeromq": "^4.6.0"
   },
   "jest": {
-    "transform": {".*": "<rootDir>/node_modules/babel-jest"}
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "testMatch": null,
+    "transform": {
+      "\\.(ts|tsx)$": "ts-jest"
+    },
+    "testRegex": "(/tests/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?|ts?)$",
+    "globals": {
+      "ts-jest": {
+        "useBabelrc": false
+      }
+    },
+    "modulePaths": [
+      "<rootDir>"
+    ]
   }
 }
