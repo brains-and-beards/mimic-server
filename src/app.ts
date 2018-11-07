@@ -41,6 +41,14 @@ interface ILog {
   readonly url?: string;
 }
 
+interface IResponseData {
+  readonly requestObject: express.Request;
+  readonly responseObject: express.Response;
+  readonly responseBody: any;
+  readonly statusCode: number;
+  readonly timeout: number;
+}
+
 class App {
   // @ts-ignore
   private port: number;
@@ -242,75 +250,59 @@ class App {
   private register(endpoint: IEndpoint, scope = ''): void {
     const path = '/' + scope + endpoint.path;
     const method = endpoint.method.toLowerCase();
-    const statusCode = endpoint.statusCode || 200;
-    const timeout = endpoint.timeout || 0;
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
-      const response = res.status(statusCode);
-      const reqBodyExists = req.body && !_.isEmpty(req.body);
-      const reqQueryExists = req.query && !_.isEmpty(req.query);
-      const requestBody = reqBodyExists ? req.body.toString('utf8') : '';
+      const body = this.getResponseBodyByParams(req);
+      if (body) {
+        const responseData: IResponseData = {
+          requestObject: req,
+          responseObject: res,
+          statusCode: endpoint.statusCode || 200,
+          timeout: endpoint.timeout || 0,
+          responseBody: body,
+        };
 
-      const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
-      const bodyExists = this.bodyExists(this.endpointsBody.get(req.path), requestBody);
-
-      if (reqQueryExists) {
-        paramExists
-          ? this.sendResponse(timeout, response, req, statusCode, true, true)
-          : this.sendResponse(timeout, response, req, 404, false);
-      } else if (reqBodyExists) {
-        bodyExists
-          ? this.isJsonString(requestBody)
-            ? this.sendResponse(timeout, response, req, statusCode, true, false, true)
-            : this.sendResponse(timeout, response, req, statusCode, true, false, false)
-          : this.sendResponse(timeout, response, req, 404, false);
+        this.sendResponse(responseData);
       } else {
-        this.sendRequestResponse(timeout, response, req, statusCode, this.endpointsResponse.get(req.method + req.path));
+        this.handleMissedRoute(req, res);
       }
     });
   }
 
-  private sendResponse(
-    timeout: number,
-    response: any,
-    req: express.Request,
-    statusCode: number,
-    isResponseExists: boolean,
-    isParamsExists?: boolean,
-    isJsonString?: boolean
-  ) {
-    let endpointResponse: any;
+  // We return `undefined` when there's no match for query / body request parameters
+  private getResponseBodyByParams(req: express.Request): string | undefined {
+    if (req.query && !_.isEmpty(req.query)) {
+      const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
 
-    if (!isResponseExists) {
-      endpointResponse = 'Not found';
-    } else if (isParamsExists) {
-      endpointResponse = this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query));
-    } else {
+      return paramExists
+        ? this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query))
+        : undefined;
+    } else if (req.body && !_.isEmpty(req.body)) {
       const requestBody = req.body.toString('utf8');
+      const bodyExists = this.bodyExists(this.endpointsBody.get(req.path), requestBody);
 
-      endpointResponse = isJsonString
-        ? this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody)))
-        : this.endpointsResponse.get(req.method + req.path + requestBody);
+      if (bodyExists) {
+        return this.isJsonString(requestBody)
+          ? this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody)))
+          : this.endpointsResponse.get(req.method + req.path + requestBody);
+      } else {
+        return undefined;
+      }
+    } else {
+      return undefined;
     }
-
-    this.sendRequestResponse(timeout, response, req, statusCode, endpointResponse);
   }
 
-  private sendRequestResponse(
-    timeout: number,
-    response: any,
-    req: express.Request,
-    statusCode: number,
-    endpointResponse: any
-  ) {
-    if (timeout > 0) {
-      setTimeout(() => response.status(statusCode).send(endpointResponse), timeout);
-    } else {
-      response.status(statusCode).send(endpointResponse);
-    }
+  private sendResponse(response: IResponseData) {
+    const { responseObject, requestObject, statusCode, timeout, responseBody } = response;
 
-    this.sendLog(req, true, LogTypes.REQUEST, statusCode);
+    if (timeout > 0) {
+      setTimeout(() => responseObject.status(statusCode).send(responseBody), timeout);
+    } else {
+      responseObject.status(statusCode).send(responseBody);
+    }
+    this.sendLog(requestObject, true, LogTypes.REQUEST, response.statusCode);
   }
 
   private isJsonString(str: any) {
