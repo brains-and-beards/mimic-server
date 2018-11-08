@@ -285,7 +285,7 @@ class App {
       if (bodyExists) {
         return this.isJsonString(requestBody)
           ? this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody)))
-          : this.endpointsResponse.get(req.method + req.path + requestBody);
+          : this.endpointsResponse.get(req.method + req.path + `"${requestBody}"`);
       } else {
         return undefined;
       }
