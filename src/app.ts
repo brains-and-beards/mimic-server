@@ -254,6 +254,7 @@ class App {
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const body = this.getResponseBodyByParams(req);
+      // for requests with body or params
       if (body) {
         const responseData: IResponseData = {
           requestObject: req,
@@ -261,6 +262,17 @@ class App {
           statusCode: endpoint.statusCode || 200,
           timeout: endpoint.timeout || 0,
           responseBody: body,
+        };
+
+        this.sendResponse(responseData);
+      } else if (this.endpointsResponse.get(req.method + req.path)) {
+        // for request without body or params
+        const responseData: IResponseData = {
+          requestObject: req,
+          responseObject: res,
+          statusCode: endpoint.statusCode || 200,
+          timeout: endpoint.timeout || 0,
+          responseBody: this.endpointsResponse.get(req.method + req.path),
         };
 
         this.sendResponse(responseData);
