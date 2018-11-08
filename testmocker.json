@@ -1,52 +1,81 @@
 {
-    "httpPort": "3000",
-    "httpsPort": "3001",
-    "projects": [
-      {
-        "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7ead2b8",
-        "name": "test",
-        "fallbackUrlPrefix": { "domain": "", "port": "", "path": "" },
-        "endpoints": [
-          {
-            "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b8",
-            "path": "/abc",
-            "method": "GET",
-            "response": {},
-            "request": { "body": {}, "params": "" },
-            "statusCode": 200,
-            "timeout": 1000,
-            "initialized": true
-          },
-          {
-            "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b7",
-            "path": "/abc",
-            "method": "POST",
-            "response": {},
-            "request": { "body": {}, "params": "" },
-            "statusCode": 200,
-            "timeout": 0
-          },
-          {
-            "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b5",
-            "path": "/abc",
-            "method": "POST",
-            "response": { "response": "response" },
-            "request": { "body": { "param1": "param1" }, "params": "" },
-            "statusCode": 200,
-            "timeout": 0
-          },
-          {
-            "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b4",
-            "path": "/abc",
-            "method": "POST",
-            "response": "response",
-            "request": { "body": { "param2": "param2" }, "params": "" },
-            "statusCode": 200,
-            "timeout": 0
-          }
-        ]
-      }
-    ],
-    "version": "1.0"
-  }
-  
+  "httpPort": "3000",
+  "httpsPort": "3001",
+  "projects": [
+    {
+      "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7ead2b8",
+      "name": "test",
+      "fallbackUrlPrefix": { "domain": "", "port": "", "path": "" },
+      "endpoints": [
+        {
+          "uuid": "79bb6930-d616-11e8-b6fb-555fa73c0bbd",
+          "path": "/object",
+          "method": "GET",
+          "response": { "hey": "I am working", "num": 4 },
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "79bb6930-d616-11e8-b6fb-fdgdf73c0bbd",
+          "path": "/object",
+          "method": "GET",
+          "response": { "hey": "I am working with params", "num": 4 },
+          "request": { "body": {}, "params": "?param=value" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "f91f1af0-d616-11e8-8e8b-af224076217e",
+          "path": "/array",
+          "method": "GET",
+          "response": [],
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b8",
+          "path": "/abc",
+          "method": "GET",
+          "response": {},
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 1000,
+          "initialized": true
+        },
+        {
+          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b7",
+          "path": "/abc",
+          "method": "POST",
+          "response": {},
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
+          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b5",
+          "path": "/abc",
+          "method": "POST",
+          "response": { "response": "response" },
+          "request": { "body": { "param1": "param1" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
+          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b4",
+          "path": "/abc",
+          "method": "POST",
+          "response": "response",
+          "request": { "body": { "param2": "param2" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
+        }
+      ]
+    }
+  ],
+  "version": "1.0"
+}
