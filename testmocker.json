@@ -93,6 +93,66 @@
           "request": { "body": { "param2": "param2" }, "params": "" },
           "statusCode": 200,
           "timeout": 0
+        },
+        {
+          "uuid": "79bb6930-d656-11e8-b6fb-555fa73c0bb1d",
+          "path": "/object",
+          "method": "PUT",
+          "response": { "hey": "I am working", "num": 4, "valid": true },
+          "request": { "body": { "data": "value" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "79bb6930-d126-11e8-b6fb-fdgdf73c0b2bd",
+          "path": "/object",
+          "method": "PUT",
+          "response": { "hey": "I am working with raw data", "num": 8, "valid": false },
+          "request": { "body": "raw text", "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "f91f1af0-4116-11e8-8e8b-af2240762317e",
+          "path": "/string",
+          "method": "PUT",
+          "response": "response",
+          "request": { "body": { "data": "value" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "f91f1af0-d586-11e8-8e8b-af2240764217e",
+          "path": "/string",
+          "method": "PUT",
+          "response": "response with raw request",
+          "request": { "body": "raw text", "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "initialized": true
+        },
+        {
+          "uuid": "706cc470-7442-11e8-a2ef-f7f1b7e5ad2b8",
+          "path": "/empty",
+          "method": "PUT",
+          "response": {},
+          "request": { "body": { "data": "value" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 1000,
+          "initialized": true
+        },
+        {
+          "uuid": "706cc470-8857-11e8-a2ef-f7f1b7w6er2b8",
+          "path": "/empty",
+          "method": "PUT",
+          "response": {},
+          "request": { "body": { "data": "value" }, "params": "?param=value" },
+          "statusCode": 200,
+          "timeout": 1000,
+          "initialized": true
         }
       ]
     },
