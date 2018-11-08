@@ -1,11 +1,11 @@
 import request from 'supertest-as-promised';
-
-const projectBasePath = 'http://localhost:3000/test';
-const projectWithoutEndpointsBasePath = 'http://localhost:3000/test_no_endpoints';
-const basePathWithoutProjectValue = 'http://localhost:3000/';
-
-const contentTypeJSON = 'application/json; charset=utf-8';
-const contentTypeText = 'text/html; charset=utf-8';
+import {
+  projectBasePath,
+  contentTypeJSON,
+  contentTypeText,
+  basePathWithoutProjectValue,
+  projectWithoutEndpointsBasePath,
+} from './config';
 
 describe('Tests for testmocker.json - GET', () => {
   it('[GET] - Should return 200 for empty body', async () => {
@@ -122,22 +122,4 @@ describe('Tests for testmocker.json - GET', () => {
       .get('/endpoint')
       .expect(404);
   });
-
-  // TODO: remove comment after merge body validation
-  // it('[POST] Should return 200 for empty body', async () => {
-  //   const res = await request('http://localhost:3000/test')
-  //     .post('/abc')
-  //     .send({ param1: 'param1' })
-  //     .expect(200);
-  //   expect(typeof res.body).toBe('object');
-  //   expect(res.body.response).toEqual('response');
-  // });
-
-  // it('[POST] Should return 200 and string response for empty body', async () => {
-  //   const res = await request('http://localhost:3000/test')
-  //     .post('/abc')
-  //     .expect(200);
-  //   expect(typeof res.body).toBe('string');
-  //   expect(res.body).toEqual('response');
-  // });
 });
