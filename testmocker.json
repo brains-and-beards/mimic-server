@@ -14,8 +14,7 @@
           "response": { "hey": "I am working", "num": 4, "valid": true },
           "request": { "body": {}, "params": "" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
         },
         {
           "uuid": "79bb6930-d616-11e8-b6fb-fdgdf73c0b2bd",
@@ -24,8 +23,7 @@
           "response": { "hey": "I am working with params", "num": 8, "valid": false },
           "request": { "body": {}, "params": "?param=value" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
         },
         {
           "uuid": "f91f1af0-d616-11e8-8e8b-af2240762317e",
@@ -34,8 +32,7 @@
           "response": "response",
           "request": { "body": {}, "params": "" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
         },
         {
           "uuid": "f91f1af0-d616-11e8-8e8b-af2240764217e",
@@ -44,8 +41,7 @@
           "response": "response with params",
           "request": { "body": {}, "params": "?param=value" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
         },
         {
           "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7e5ad2b8",
@@ -54,8 +50,7 @@
           "response": {},
           "request": { "body": {}, "params": "" },
           "statusCode": 200,
-          "timeout": 1000,
-          "initialized": true
+          "timeout": 1000
         },
         {
           "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7w6er2b8",
@@ -64,12 +59,11 @@
           "response": {},
           "request": { "body": {}, "params": "?param=value" },
           "statusCode": 200,
-          "timeout": 1000,
-          "initialized": true
+          "timeout": 1000
         },
         {
-          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ea7d2b7",
-          "path": "/abc",
+          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ea7d2wb7",
+          "path": "/empty",
           "method": "POST",
           "response": {},
           "request": { "body": {}, "params": "" },
@@ -77,20 +71,114 @@
           "timeout": 0
         },
         {
-          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ea8d2b5",
-          "path": "/abc",
+          "uuid": "79bb6930-d616-11e8-eb6fb-555fa73c0bb1d",
+          "path": "/object",
           "method": "POST",
-          "response": { "response": "response" },
-          "request": { "body": { "param1": "param1" }, "params": "" },
+          "response": { "hey": "I am working", "num": 4, "valid": true },
+          "request": { "body": {}, "params": "" },
           "statusCode": 200,
           "timeout": 0
         },
         {
-          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b709ead2b4",
-          "path": "/abc",
+          "uuid": "f91f1af0-d616-s11e8-8e8b-af2240762317e",
+          "path": "/string",
           "method": "POST",
           "response": "response",
-          "request": { "body": { "param2": "param2" }, "params": "" },
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
+          "uuid": "706cc470-d8f42s-11e8-a2ef-f7f1b7w6er2b8",
+          "path": "/empty",
+          "method": "POST",
+          "response": {},
+          "request": { "body": { "param": "value" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 1000
+        },
+        {
+          "uuid": "79bb6930d-dd616-11e8-b6fb-fdgdf73c0b2bd",
+          "path": "/object",
+          "method": "POST",
+          "response": { "hey": "I am working with body", "num": 8, "valid": false },
+          "request": { "body": { "param": "value" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
+          "uuid": "f91f1af0d-d616-11e8d-8e8b-af2240764217e",
+          "path": "/string",
+          "method": "POST",
+          "response": "response with params",
+          "request": { "body": { "param": "value" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
+          "uuid": "f91f1af0d-d616-11e8-8e8b-af2240764217e",
+          "path": "/longResponse",
+          "method": "POST",
+          "response": {
+            "guys": [
+              {
+                "name": "John",
+                "age": 30,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 31,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 32,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 33,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 34,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 35,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 36,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 37,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 38,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 39,
+                "cars": ["Ford", "BMW", "Fiat"]
+              },
+              {
+                "name": "John",
+                "age": 40,
+                "cars": ["Ford", "BMW", "Fiat"]
+              }
+            ]
+          },
+          "request": { "body": { "param": "value" }, "params": "" },
           "statusCode": 200,
           "timeout": 0
         },
