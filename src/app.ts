@@ -265,17 +265,6 @@ class App {
         };
 
         this.sendResponse(responseData);
-      } else if (this.endpointsResponse.get(req.method + req.path)) {
-        // for request without body or params
-        const responseData: IResponseData = {
-          requestObject: req,
-          responseObject: res,
-          statusCode: endpoint.statusCode || 200,
-          timeout: endpoint.timeout || 0,
-          responseBody: this.endpointsResponse.get(req.method + req.path),
-        };
-
-        this.sendResponse(responseData);
       } else {
         this.handleMissedRoute(req, res);
       }
@@ -283,7 +272,7 @@ class App {
   }
 
   // We return `undefined` when there's no match for query / body request parameters
-  private getResponseBodyByParams(req: express.Request): string | undefined {
+  private getResponseBodyByParams(req: express.Request): string | undefined | object {
     if (req.query && !_.isEmpty(req.query)) {
       const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
 
@@ -302,7 +291,7 @@ class App {
         return undefined;
       }
     } else {
-      return undefined;
+      return this.endpointsResponse.get(req.method + req.path);
     }
   }
 
