@@ -3,75 +3,9 @@
   "httpsPort": "3001",
   "projects": [
     {
-      "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7ead2b8",
-      "name": "Nata123lia",
-      "fallbackUrlPrefix": { "domain": "haikuco.de", "port": "80", "path": "/blog" },
-      "endpoints": [
-        {
-          "uuid": "706cc470-8f42-11e8-a2ef-f7f1b7ead2b8",
-          "path": "/dddwowowo",
-          "method": "DELETE",
-          "response": {},
-          "request": { "body": { "param1": "null", "param2": 2222 }, "params": "?kkkooo" },
-          "statusCode": 200,
-          "timeout": 1000,
-          "initialized": true
-        },
-        {
-          "uuid": "eece2160-8f42-11e8-80f0-0d767d0053b7",
-          "path": "/o",
-          "method": "PATCH",
-          "response": {},
-          "request": { "body": { "kkk": "kd" }, "params": "" },
-          "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
-        },
-        {
-          "uuid": "9cf63f90-93ce-11e8-9820-ad3aeb80f7df",
-          "path": "/",
-          "method": "GET",
-          "response": { "errors": "An unknown error has occured. Blame me." },
-          "request": { "body": {}, "params": "?hehe=2&lala=2" },
-          "statusCode": 400,
-          "timeout": 0,
-          "initialized": true
-        },
-        {
-          "uuid": "39bb54f0-950a-11e8-9fd4-45aabbd7cc33",
-          "path": "/kdkkdkd",
-          "method": "POST",
-          "response": {},
-          "request": { "body": {}, "params": "" },
-          "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
-        },
-        {
-          "uuid": "3a61ce20-950a-11e8-9fd4-45aabbd7cc33",
-          "path": "/momoko",
-          "method": "GET",
-          "response": { "foo": "bar" },
-          "request": { "body": {}, "params": "" },
-          "statusCode": 200,
-          "timeout": 111,
-          "initialized": true
-        },
-        {
-          "uuid": "5932b4c0-d616-11e8-89f6-a551413c743b",
-          "path": "/ewew",
-          "method": "GET",
-          "response": {},
-          "request": { "body": {}, "params": "" },
-          "statusCode": 200,
-          "timeout": 0,
-          "initialized": false
-        }
-      ]
-    },
-    {
       "uuid": "7088acb0-d616-11e8-b6fb-555fa73c0bbd",
       "name": "nowy",
+      "fallbackUrlPrefix": { "domain": "", "path": "", "port": "" },
       "endpoints": [
         {
           "uuid": "71ac9340-d616-11e8-b6fb-555fa73c0bbd",
@@ -80,8 +14,7 @@
           "response": {},
           "request": { "body": {}, "params": "" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
         },
         {
           "uuid": "79bb6930-d616-11e8-b6fb-555fa73c0bbd",
@@ -90,8 +23,7 @@
           "response": { "hey": "I am working" },
           "request": { "body": {}, "params": "?para=2" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
         },
         {
           "uuid": "f91f1af0-d616-11e8-8e8b-af224076217e",
@@ -100,31 +32,69 @@
           "response": { "single": "forever alone" },
           "request": { "body": {}, "params": "" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
         },
         {
           "uuid": "2d8e9130-d617-11e8-8e8b-af224076217e",
           "path": "/a",
           "method": "POST",
-          "response": {},
-          "request": { "body": {}, "params": "" },
+          "response": { "nanan": 2 },
+          "request": { "body": { "djdj": 2 }, "params": "" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
         },
         {
           "uuid": "762e2e50-d617-11e8-8b83-3fb282517a21",
-          "path": "/",
+          "path": "/a",
           "method": "GET",
-          "response": {},
+          "response": "no heeejka",
           "request": { "body": {}, "params": "?koko=2" },
           "statusCode": 200,
-          "timeout": 0,
-          "initialized": true
+          "timeout": 0
+        },
+        {
+          "uuid": "209d3a80-d892-11e8-9788-5b0e7fd26175",
+          "path": "/a",
+          "method": "GET",
+          "response": { "no": "wiadomoo" },
+          "request": { "body": {}, "params": "?natalia=superjest" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
+          "uuid": "58b7f550-d91d-11e8-966d-03e47e07715c",
+          "path": "/a",
+          "method": "GET",
+          "response": { "koko": 2 },
+          "request": { "body": {}, "params": "?bb=2&koko=2" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
+          "uuid": "a4f097b0-d91d-11e8-966d-03e47e07715c",
+          "path": "/a",
+          "method": "POST",
+          "response": "sssss",
+          "request": { "body": { "z": 2 }, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
+          "uuid": "d90c96c0-db8e-11e8-9d00-e1d7b720d4e7",
+          "path": "/a",
+          "method": "POST",
+          "response": {},
+          "request": { "body": "mama", "params": "" },
+          "statusCode": 200,
+          "timeout": 0
         }
-      ],
-      "fallbackUrlPrefix": { "domain": "", "path": "", "port": "" }
+      ]
+    },
+    {
+      "uuid": "d8a47400-d8fa-11e8-b168-bdbc9dca89bd",
+      "name": "eeee",
+      "fallbackUrlPrefix": { "domain": "", "path": "", "port": "" },
+      "endpoints": []
     }
   ],
   "version": "1.0"

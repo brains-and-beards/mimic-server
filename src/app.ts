@@ -41,6 +41,14 @@ interface ILog {
   readonly url?: string;
 }
 
+interface IResponseData {
+  readonly requestObject: express.Request;
+  readonly responseObject: express.Response;
+  readonly responseBody: any;
+  readonly statusCode: number;
+  readonly timeout: number;
+}
+
 class App {
   // @ts-ignore
   private port: number;
@@ -58,6 +66,7 @@ class App {
   private socketLogs: any;
   private errorHandler: ErrorHandler;
   private endpointsParams = new Map<string, any>();
+  private endpointsBody = new Map<string, any>();
   private endpointsResponse = new Map<string, any>();
 
   constructor(errorHandler: ErrorHandler) {
@@ -167,22 +176,47 @@ class App {
     const { endpoints, projects } = this.config.entities;
     _.forEach(endpoints, (endpoint: IEndpoint) => {
       const project = projects[endpoint.projectId];
-      this.register(endpoint, project.name);
       const endpointPath = '/' + project.name + endpoint.path;
-      const values = this.endpointsParams.get(endpointPath);
-      this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
 
-      if (values && values.length > 0) {
-        const params = values;
-        params.push(endpoint.request.params);
-        this.endpointsParams.set(endpointPath, params);
-      } else {
-        const params = [];
-        params.push(endpoint.request.params);
-        this.endpointsParams.set(endpointPath, params);
-      }
+      this.register(endpoint, project.name);
+      this.parseEndpointResponse(endpoint, endpointPath);
+      this.parseParamsEndpoint(endpoint, endpointPath);
+      this.parseBodyEndpoint(endpoint, endpointPath);
     });
-    this.addMissedRouteHandler();
+
+    // Handle non-mocked routes
+    this.express.use('/', (req: express.Request, res: any, _next: any) => {
+      this.handleMissedRoute(req, res);
+    });
+  }
+
+  private parseEndpointResponse(endpoint: IEndpoint, endpointPath: string) {
+    if (endpoint.request.params) {
+      this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
+    } else if (endpoint.request.body && !_.isEqual(endpoint.request.body, {})) {
+      this.endpointsResponse.set(
+        endpoint.method + endpointPath + JSON.stringify(endpoint.request.body),
+        endpoint.response
+      );
+    } else {
+      this.endpointsResponse.set(endpoint.method + endpointPath, endpoint.response);
+    }
+  }
+
+  private parseParamsEndpoint(endpoint: IEndpoint, endpointPath: string) {
+    const existingEndpointParams = this.endpointsParams.get(endpointPath);
+    const params = existingEndpointParams && existingEndpointParams.length > 0 ? existingEndpointParams : [];
+
+    params.push(endpoint.request.params);
+    this.endpointsParams.set(endpointPath, params);
+  }
+
+  private parseBodyEndpoint(endpoint: IEndpoint, endpointPath: string) {
+    const bodyValues = this.endpointsBody.get(endpointPath);
+
+    const bodyArray = bodyValues && bodyValues.length > 0 ? bodyValues : [];
+    bodyArray.push(endpoint.request.body);
+    this.endpointsBody.set(endpointPath, bodyArray);
   }
 
   private getAppropriateListenerFunction(method: string): express.IRouterMatcher<express.Express> {
@@ -214,48 +248,100 @@ class App {
   }
 
   private register(endpoint: IEndpoint, scope = ''): void {
-    const query = endpoint.request.params;
     const path = '/' + scope + endpoint.path;
     const method = endpoint.method.toLowerCase();
-    const statusCode = endpoint.statusCode || 200;
-    const timeout = endpoint.timeout || 0;
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
-      const response = res.status(statusCode);
+      const body = this.getResponseBodyByParams(req);
+      if (body) {
+        const responseData: IResponseData = {
+          requestObject: req,
+          responseObject: res,
+          statusCode: endpoint.statusCode || 200,
+          timeout: endpoint.timeout || 0,
+          responseBody: body,
+        };
 
-      if (req.query && !_.isEmpty(req.query)) {
-        const paramsForEndpoint = this.endpointsParams.get(req.path);
-        let paramExists = false;
-        paramsForEndpoint.forEach((param: string) => {
-          if (_.isEqual(this.parseQuery(param), req.query)) {
-            paramExists = true;
-          }
-        });
-        if (paramExists) {
-          this.sendResponse(
-            timeout,
-            response,
-            this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query))
-          );
-          this.sendLog(req, true, LogTypes.REQUEST, statusCode);
-        } else {
-          this.sendResponse(timeout, response, 'Not found');
-          this.sendLog(req, true, LogTypes.REQUEST, 404);
-        }
+        this.sendResponse(responseData);
       } else {
-        this.sendResponse(timeout, response, this.endpointsResponse.get(req.method + req.path));
-        this.sendLog(req, true, LogTypes.REQUEST, statusCode);
+        this.handleMissedRoute(req, res);
       }
     });
   }
 
-  private sendResponse(timeout: number, response: any, endpointResponse: any) {
-    if (timeout > 0) {
-      setTimeout(() => response.send(endpointResponse), timeout);
+  // We return `undefined` when there's no match for query / body request parameters
+  private getResponseBodyByParams(req: express.Request): string | undefined {
+    if (req.query && !_.isEmpty(req.query)) {
+      const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
+
+      return paramExists
+        ? this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query))
+        : undefined;
+    } else if (req.body && !_.isEmpty(req.body)) {
+      const requestBody = req.body.toString('utf8');
+      const bodyExists = this.bodyExists(this.endpointsBody.get(req.path), requestBody);
+
+      if (bodyExists) {
+        return this.isJsonString(requestBody)
+          ? this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody)))
+          : this.endpointsResponse.get(req.method + req.path + `"${requestBody}"`);
+      } else {
+        return undefined;
+      }
     } else {
-      response.send(endpointResponse);
+      return undefined;
     }
+  }
+
+  private sendResponse(response: IResponseData) {
+    const { responseObject, requestObject, statusCode, timeout, responseBody } = response;
+
+    if (timeout > 0) {
+      setTimeout(() => responseObject.status(statusCode).send(responseBody), timeout);
+    } else {
+      responseObject.status(statusCode).send(responseBody);
+    }
+    this.sendLog(requestObject, true, LogTypes.REQUEST, response.statusCode);
+  }
+
+  private isJsonString(str: any) {
+    try {
+      JSON.parse(str);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
+  private bodyExists(bodyForEndpoint: any, requestBody: any) {
+    let bodyExists = false;
+    bodyForEndpoint.forEach((body: JSON | string) => {
+      if (this.isJsonString(requestBody)) {
+        if (_.isEqual(requestBody, {}) && _.isEqual(body, requestBody)) {
+          bodyExists = true;
+        } else if (_.isEqual(body, JSON.parse(requestBody))) {
+          bodyExists = true;
+        }
+      } else {
+        if (_.isEqual(body, requestBody)) {
+          bodyExists = true;
+        }
+      }
+    });
+
+    return bodyExists;
+  }
+
+  private paramsExists(paramsForEndpoint: any, req: express.Request) {
+    let paramExists = false;
+    paramsForEndpoint.forEach((param: string) => {
+      if (_.isEqual(this.parseQuery(param), req.query)) {
+        paramExists = true;
+      }
+    });
+
+    return paramExists;
   }
 
   private parseQuery(queryString: string) {
@@ -284,18 +370,16 @@ class App {
     );
   }
 
-  private addMissedRouteHandler() {
-    this.express.use('/', (req: express.Request, res: any, next: any) => {
-      const projectName = req.originalUrl.split('/')[1];
-      const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+  private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
+    const projectName = apiRequest.originalUrl.split('/')[1];
+    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
-      if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
-        const response = this.forwardRequest(req, res);
-      } else {
-        this.sendLog(req, false, LogTypes.RESPONSE, 404);
-        res.status(404).send('Not found');
-      }
-    });
+    if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
+      this.forwardRequest(apiRequest, response);
+    } else {
+      this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
+      response.status(404).send('Not found');
+    }
   }
 
   private getForwardingOptions(req: express.Request) {
@@ -321,7 +405,13 @@ class App {
       if (error) {
         this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
       } else {
-        this.sendLog(req, true, LogTypes.RESPONSE, response && response.statusCode ? response.statusCode : 418, body);
+        this.sendLog(
+          req,
+          true,
+          LogTypes.RESPONSE,
+          response && response.statusCode ? response.statusCode : 418,
+          body.toString()
+        );
       }
     }).pipe(responseStream);
   }
