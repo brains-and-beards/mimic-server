@@ -254,7 +254,6 @@ class App {
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
       const body = this.getResponseBodyByParams(req);
-      // for requests with body or params
       if (body) {
         const responseData: IResponseData = {
           requestObject: req,
@@ -291,6 +290,7 @@ class App {
         return undefined;
       }
     } else {
+      // for requests without body or params
       return this.endpointsResponse.get(req.method + req.path);
     }
   }
