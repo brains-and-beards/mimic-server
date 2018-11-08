@@ -95,6 +95,12 @@
           "timeout": 0
         }
       ]
+    },
+    {
+      "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7rtd2b8",
+      "name": "test_no_endpoints",
+      "fallbackUrlPrefix": { "domain": "", "port": "", "path": "" },
+      "endpoints": []
     }
   ],
   "version": "1.0"
