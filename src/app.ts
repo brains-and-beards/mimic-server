@@ -271,7 +271,7 @@ class App {
   }
 
   // We return `undefined` when there's no match for query / body request parameters
-  private getResponseBodyByParams(req: express.Request): string | undefined {
+  private getResponseBodyByParams(req: express.Request): string | undefined | object {
     if (req.query && !_.isEmpty(req.query)) {
       const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
 
@@ -290,7 +290,8 @@ class App {
         return undefined;
       }
     } else {
-      return undefined;
+      // for requests without body or params
+      return this.endpointsResponse.get(req.method + req.path);
     }
   }
 

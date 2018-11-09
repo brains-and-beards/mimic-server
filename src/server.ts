@@ -18,7 +18,9 @@ class Server {
     this.app = new App(this.errorHandler);
 
     if (!filename) {
-      this.configFilePath = './apimocker.json';
+      process.env.NODE_ENV === 'test'
+        ? (this.configFilePath = './testmocker.json')
+        : (this.configFilePath = './apimocker.json');
     } else {
       this.configFilePath = filename;
     }

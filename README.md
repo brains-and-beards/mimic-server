@@ -8,7 +8,6 @@
 
 `yarn watch`
 
-
 ## Generate a self-signed certificate for serving SSL requests
 
 Running an HTTPS server requires a UNIX-compatible system with
@@ -21,3 +20,8 @@ Running an HTTPS server requires a UNIX-compatible system with
   add it to keychain and update "trust" preferences).
 - The server should now support SSL on port 3001, or a custom `httpsPort`
   specified in the config file (apimocker.json).
+
+## Tests
+
+- Run server by command `yarn start-test`
+- Run tests yarn test
