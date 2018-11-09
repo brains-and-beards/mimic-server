@@ -84,7 +84,7 @@
     "testRegex": "(/tests/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?|ts?)$",
     "globals": {
       "ts-jest": {
-        "useBabelrc": false
+        "babelConfig": false
       }
     },
     "modulePaths": [
