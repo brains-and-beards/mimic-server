@@ -9,6 +9,7 @@ import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
 import ErrorHandler from './errors/error-handler';
+import { parseHost } from './helpers/host-parser';
 
 export const enum MessageTypes {
   STOP,
@@ -375,7 +376,7 @@ class App {
     const projectName = apiRequest.originalUrl.split('/')[1];
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
-    if (project && project.fallbackUrlPrefix && project.fallbackUrlPrefix.domain) {
+    if (project && project.urlPrefix) {
       this.forwardRequest(apiRequest, response);
     } else {
       this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
@@ -384,15 +385,15 @@ class App {
   }
 
   private getForwardingOptions(req: express.Request) {
-    const [_unused, projectName, ...localPath] = req.originalUrl.split('/');
+    const [, projectName, ...localPath] = req.originalUrl.split('/');
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
-    const { domain, path, port } = project.fallbackUrlPrefix;
-    const portInfo = port ? `:${port}` : '';
+    const { urlPrefix } = project;
 
-    const url = `http://${domain}${portInfo}${path}/${localPath.join('/')}`;
+    const url = `${urlPrefix}/${localPath.join('/')}`;
 
+    const host = parseHost(url);
     return {
-      headers: { ...req.headers, host: domain },
+      headers: { ...req.headers, host },
       method: req.method,
       body: req.method === 'GET' ? null : req.body,
       url,
