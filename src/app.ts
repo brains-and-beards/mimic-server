@@ -337,11 +337,13 @@ class App {
 
   private paramsExists(paramsForEndpoint: any, req: express.Request) {
     let paramExists = false;
-    paramsForEndpoint.forEach((param: string) => {
-      if (_.isEqual(this.parseQuery(param), req.query)) {
-        paramExists = true;
-      }
-    });
+    if (paramsForEndpoint) {
+      paramsForEndpoint.forEach((param: string) => {
+        if (_.isEqual(this.parseQuery(param), req.query)) {
+          paramExists = true;
+        }
+      });
+    }
 
     return paramExists;
   }
@@ -389,14 +391,14 @@ class App {
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
     const { urlPrefix } = project;
 
-    const url = `${urlPrefix}/${localPath.join('/')}`;
+    const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;
 
     const host = parseHost(url);
     return {
       headers: { ...req.headers, host },
       method: req.method,
       body: req.method === 'GET' ? null : req.body,
-      url,
+      uri: url,
     };
   }
 
