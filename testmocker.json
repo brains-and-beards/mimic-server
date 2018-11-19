@@ -5,7 +5,6 @@
     {
       "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7ead2b8",
       "name": "test",
-      "fallbackUrlPrefix": { "domain": "", "port": "", "path": "" },
       "endpoints": [
         {
           "uuid": "79bb6930-d616-11e8-b6fb-555fa73c0bb1d",
@@ -355,7 +354,6 @@
     {
       "uuid": "6fac0c80-8f42-11e8-a2ef-f7f1b7rtd2b8",
       "name": "test_no_endpoints",
-      "fallbackUrlPrefix": { "domain": "", "port": "", "path": "" },
       "endpoints": []
     }
   ],
