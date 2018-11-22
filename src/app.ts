@@ -394,9 +394,8 @@ class App {
     const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;
 
     const host = parseHost(url);
-
     return {
-      headers: { host },
+      headers: { ...req.headers, host },
       method: req.method,
       body: req.method === 'GET' ? null : req.body,
       uri: url,
