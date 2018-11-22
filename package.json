@@ -19,7 +19,7 @@
     "serve-debug": "nodemon --inspect dist/runner.js",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\"",
     "generate-cert": "./utils/generate-cert.sh",
-    "check-all": "concurrently \"yarn tslint\" \"yarn build-ts\" \"yarn start-test\" \"yarn test\" \"sleep 10 && yarn stop\""
+    "check-all": "sh check-all.sh"
   },
   "bin": {
     "apimocker_server": "./dist/runner.js",
