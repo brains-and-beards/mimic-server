@@ -1,1 +1,19 @@
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const extractHostname=t=>{let e;return e=(e=(e=t.indexOf("//")>-1?t.split("/")[2]:t.split("/")[0]).split(":")[0]).split("?")[0]},extractRootDomain=t=>{let e=extractHostname(t);const s=e.split("."),o=s.length;return o>2&&(e=s[o-2]+"."+s[o-1],2===s[o-2].length&&2===s[o-1].length&&(e=s[o-3]+"."+e)),e};exports.parseHost=(t=>extractRootDomain(t));
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+// https://stackoverflow.com/questions/8498592/extract-hostname-name-from-string
+const extractHostname = (url) => {
+    let hostname;
+    if (url.indexOf('//') > -1) {
+        hostname = url.split('/')[2];
+    }
+    else {
+        hostname = url.split('/')[0];
+    }
+    hostname = hostname.split(':')[0];
+    hostname = hostname.split('?')[0];
+    return hostname;
+};
+exports.parseHost = (url) => {
+    return extractHostname(url);
+};
+//# sourceMappingURL=host-parser.js.map
