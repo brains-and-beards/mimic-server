@@ -406,6 +406,27 @@ class App {
     const options = this.getForwardingOptions(req);
 
     request(options, (error, response, body) => {
+      const contentEncoding = response.headers['content-encoding'];
+      if (contentEncoding && contentEncoding.includes('gzip')) {
+        this.forwardGzipRequest(options, req);
+      } else {
+        if (error) {
+          this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
+        } else {
+          this.sendLog(
+            req,
+            true,
+            LogTypes.RESPONSE,
+            response && response.statusCode ? response.statusCode : 418,
+            body.toString()
+          );
+        }
+      }
+    }).pipe(responseStream);
+  }
+
+  private forwardGzipRequest(options: any, req: express.Request) {
+    request({ ...options, gzip: true }, (error: any, response: any, body: any) => {
       if (error) {
         this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
       } else {
@@ -417,7 +438,7 @@ class App {
           body.toString()
         );
       }
-    }).pipe(responseStream);
+    });
   }
 }
 
