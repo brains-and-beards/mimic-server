@@ -5,6 +5,7 @@
   "scripts": {
     "start": "cross-env NODE_ENV=dev yarn run serve",
     "start-test": "cross-env NODE_ENV=test yarn run serve",
+    "stop": "killall node",
     "build": "yarn gulp compile && yarn run tslint",
     "serve": "node dist/runner.js",
     "watch-node": "nodemon dist/runner.js",
@@ -17,8 +18,8 @@
     "debug": "yarn run build && yarn run watch-debug",
     "serve-debug": "nodemon --inspect dist/runner.js",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\"",
-    "check-all": "yarn tslint && yarn build-ts && yarn test",
-    "generate-cert": "./utils/generate-cert.sh"
+    "generate-cert": "./utils/generate-cert.sh",
+    "check-all": "sh check-all.sh"
   },
   "bin": {
     "apimocker_server": "./dist/runner.js",
@@ -42,7 +43,7 @@
     "@types/node": "^10.5.2",
     "@types/supertest": "^2.0.6",
     "@types/supertest-as-promised": "^2.0.36",
-    "concurrently": "^3.6.0",
+    "concurrently": "^4.0.1",
     "cross-env": "^5.2.0",
     "gulp": "^3.9.1",
     "gulp-typescript": "^5.0.0-alpha.3",
