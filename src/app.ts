@@ -382,6 +382,11 @@ class App {
     return requestEndpoint.replace(`/${projectName}`, '');
   };
 
+  /**
+   * A project contains the IDs of the related endpoints, this function filters the endpoint objects based on those IDs
+   * @param project The projects with the endpoint ID list
+   * @returns the endpoints of the given project or null if no endpoints are available
+   */
   private endpointsInProject = (project: IProject) => {
     const { endpoints } = this.config.entities;
 
@@ -390,9 +395,11 @@ class App {
     }
 
     const endpointsInProject = [];
+    // Endpoints are stored in dictionaries where the endpoint ID is the key
     const keys = Object.keys(endpoints);
 
     for (const currentKey of keys) {
+      // Checking if the endpoint present in the project
       const endpoint = _.find(project.endpoints, endp => endp === currentKey);
 
       if (endpoint) {
@@ -404,13 +411,16 @@ class App {
     return endpointsInProject;
   };
 
-  private findQueryMatches = (
-    currentEndpointParams: string,
-    requestQuery: any,
-    requestQueryKeys: ReadonlyArray<string>
-  ) => {
+  /**
+   * Compares the keys and values of the requests params with the mocked endpoint's params.
+   * @param currentEndpointParams query params of the endpoint
+   * @param requestQuery query params of the request
+   * @returns true if all the parameters that are present in the mocked endpoint present in the request
+   */
+  private findQueryMatches = (currentEndpointParams: string, requestQuery: any) => {
     const parsed = this.parseQuery(currentEndpointParams);
     const parsedKeys = Object.keys(parsed);
+    const requestQueryKeys = Object.keys(requestQuery);
 
     let match = true;
     for (const currentKey of parsedKeys) {
@@ -429,6 +439,12 @@ class App {
     return match;
   };
 
+  /**
+   * If all the parameters that are present in the mocked endpoint present in the request too we should use
+   * the mocked endpoint even if the request has some additional parameters
+   * @param apiRequest we're checking if can be mocked
+   * @returns matching endpoints or null if no endpoints are available
+   */
   private getMockedEndpointForQuery(apiRequest: express.Request) {
     const projectName = apiRequest.originalUrl.split('/')[1];
     const requestPath = this.extractPathForURL(apiRequest.originalUrl);
@@ -440,8 +456,6 @@ class App {
       return null;
     }
 
-    const requestQueryKeys = Object.keys(apiRequest.query);
-
     const matches = [];
     for (const currentEndpoint of endpointsInProject) {
       const currentPath = currentEndpoint.path;
@@ -452,7 +466,7 @@ class App {
         continue;
       }
 
-      const match = this.findQueryMatches(currentEndpoint.request.params, apiRequest.query, requestQueryKeys);
+      const match = this.findQueryMatches(currentEndpoint.request.params, apiRequest.query);
       if (match) {
         matches.push(currentEndpoint);
       }
@@ -466,8 +480,7 @@ class App {
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
 
     const mockedEndpoint = this.getMockedEndpointForQuery(apiRequest);
-    console.log(`------------------------------------ MOCKED ENDPOINT ${JSON.stringify(mockedEndpoint)}`)
-
+    console.log(`------------------------------------ MOCKED ENDPOINT ${JSON.stringify(mockedEndpoint)}`);
 
     if (project && project.urlPrefix) {
       this.forwardRequest(apiRequest, response);
