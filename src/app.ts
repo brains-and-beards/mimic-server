@@ -10,6 +10,8 @@ import fs from 'fs';
 import request from 'request';
 import ErrorHandler from './errors/error-handler';
 import { parseHost } from './helpers/host-parser';
+import { getMockedEndpointForQuery } from './helpers/query-params-matcher';
+import { parseQuery } from './helpers/query-parser';
 
 export const enum MessageTypes {
   STOP,
@@ -339,27 +341,13 @@ class App {
     let paramExists = false;
     if (paramsForEndpoint) {
       paramsForEndpoint.forEach((param: string) => {
-        if (_.isEqual(this.parseQuery(param), req.query)) {
+        if (_.isEqual(parseQuery(param), req.query)) {
           paramExists = true;
         }
       });
     }
 
     return paramExists;
-  }
-
-  private parseQuery(queryString: string) {
-    if (queryString.length > 0) {
-      const query: any = {};
-      const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
-      for (const item of pairs) {
-        const pair: any = item.split('=');
-        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
-      }
-      return query;
-    } else {
-      return {};
-    }
   }
 
   private parseQueryToString(obj: any) {
@@ -374,112 +362,13 @@ class App {
     );
   }
 
-  private extractPathForURL = (url: string) => {
-    const projectName = url.split('/')[1];
-    // Remove query parameters from url
-    const requestEndpoint = url.split('?')[0];
-    // The url for parsing the endpoint will be $/{projectName}/endpoint, so we have to remove the projectName from the beginning of the url
-    return requestEndpoint.replace(`/${projectName}`, '');
-  };
-
-  /**
-   * A project contains the IDs of the related endpoints, this function filters the endpoint objects based on those IDs
-   * @param project The projects with the endpoint ID list
-   * @returns the endpoints of the given project or null if no endpoints are available
-   */
-  private endpointsInProject = (project: IProject) => {
-    const { endpoints } = this.config.entities;
-
-    if (!endpoints || !project || !project.endpoints) {
-      return null;
-    }
-
-    const endpointsInProject = [];
-    // Endpoints are stored in dictionaries where the endpoint ID is the key
-    const keys = Object.keys(endpoints);
-
-    for (const currentKey of keys) {
-      // Checking if the endpoint present in the project
-      const endpoint = _.find(project.endpoints, endp => endp === currentKey);
-
-      if (endpoint) {
-        const currentValue = endpoints[currentKey];
-        endpointsInProject.push(currentValue);
-      }
-    }
-
-    return endpointsInProject;
-  };
-
-  /**
-   * Compares the keys and values of the requests params with the mocked endpoint's params.
-   * @param currentEndpointParams query params of the endpoint
-   * @param requestQuery query params of the request
-   * @returns true if all the parameters that are present in the mocked endpoint present in the request
-   */
-  private findQueryMatches = (currentEndpointParams: string, requestQuery: any) => {
-    const parsed = this.parseQuery(currentEndpointParams);
-    const parsedKeys = Object.keys(parsed);
-    const requestQueryKeys = Object.keys(requestQuery);
-
-    let match = true;
-    for (const currentKey of parsedKeys) {
-      if (requestQueryKeys.includes(currentKey)) {
-        const currentValue = parsed[currentKey];
-        const valueInRequest = requestQuery[currentKey];
-
-        if (currentValue !== valueInRequest) {
-          match = false;
-        }
-      } else {
-        match = false;
-      }
-    }
-
-    return match;
-  };
-
-  /**
-   * If all the parameters that are present in the mocked endpoint present in the request too we should use
-   * the mocked endpoint even if the request has some additional parameters
-   * @param apiRequest we're checking if can be mocked
-   * @returns matching endpoints or null if no endpoints are available
-   */
-  private getMockedEndpointForQuery(apiRequest: express.Request) {
-    const projectName = apiRequest.originalUrl.split('/')[1];
-    const requestPath = this.extractPathForURL(apiRequest.originalUrl);
-    const requestMethod = apiRequest.method;
-    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
-    const endpointsInProject = this.endpointsInProject(project);
-
-    if (!endpointsInProject) {
-      return null;
-    }
-
-    const matches = [];
-    for (const currentEndpoint of endpointsInProject) {
-      const currentPath = currentEndpoint.path;
-      const currentMethod = currentEndpoint.method;
-
-      // If path or method doesn't match go to next endpoint
-      if (currentPath !== requestPath || currentMethod !== requestMethod) {
-        continue;
-      }
-
-      const match = this.findQueryMatches(currentEndpoint.request.params, apiRequest.query);
-      if (match) {
-        matches.push(currentEndpoint);
-      }
-    }
-
-    return matches;
-  }
-
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
     const projectName = apiRequest.originalUrl.split('/')[1];
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+    const { endpoints } = this.config.entities;
+    const { projects } = this.config.entities;
 
-    const mockedEndpoint = this.getMockedEndpointForQuery(apiRequest);
+    const mockedEndpoint = getMockedEndpointForQuery(projects, endpoints, apiRequest);
     console.log(`------------------------------------ MOCKED ENDPOINT ${JSON.stringify(mockedEndpoint)}`);
 
     if (project && project.urlPrefix) {
