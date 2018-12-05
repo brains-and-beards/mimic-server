@@ -362,6 +362,30 @@ class App {
     );
   }
 
+  private sendMockedRequest = (
+    apiRequest: express.Request,
+    response: express.Response,
+    projectName: string,
+    mockedEndpoint: IEndpoint
+  ) => {
+    const protocol = apiRequest.protocol;
+    const hostName = apiRequest.hostname;
+    const port = this.port;
+    const path = mockedEndpoint.path;
+    const params = mockedEndpoint.request.params || '';
+
+    const constructedURL = `${protocol}://${hostName}:${port}/${projectName}${path}${params}`;
+
+    const constructedRequest = {
+      headers: { ...apiRequest.headers },
+      method: apiRequest.method,
+      body: apiRequest.method === 'GET' ? null : apiRequest.body,
+      uri: constructedURL,
+    };
+
+    request(constructedRequest).pipe(response);
+  };
+
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
     const projectName = apiRequest.originalUrl.split('/')[1];
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
@@ -369,10 +393,12 @@ class App {
     const { projects } = this.config.entities;
 
     const mockedEndpoint = getMockedEndpointForQuery(projects, endpoints, apiRequest);
-    console.log(`------------------------------------ MOCKED ENDPOINT ${JSON.stringify(mockedEndpoint)}`);
 
-    if (project && project.urlPrefix) {
+    if (project && project.urlPrefix && !mockedEndpoint) {
       this.forwardRequest(apiRequest, response);
+    } else if (mockedEndpoint) {
+      const firstMocked = mockedEndpoint[0];
+      this.sendMockedRequest(apiRequest, response, projectName, firstMocked);
     } else {
       this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
       response.status(404).send('Not found');
@@ -385,8 +411,8 @@ class App {
     const { urlPrefix } = project;
 
     const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;
-
     const host = parseHost(url);
+
     return {
       headers: { ...req.headers, host },
       method: req.method,
