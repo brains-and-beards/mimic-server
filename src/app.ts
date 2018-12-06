@@ -42,6 +42,7 @@ interface ILog {
   readonly message?: string;
   readonly headers?: any;
   readonly url?: string;
+  readonly isWarning?: boolean;
 }
 
 interface IResponseData {
@@ -386,18 +387,33 @@ class App {
     request(constructedRequest).pipe(response);
   };
 
+  private sendLogForMockedRequest = () => {
+    const logObject: ILog = {
+      type: LogTypes.SERVER,
+      message: 'WARNING - Multiple mocked endpoints found',
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
+      matched: true,
+      isWarning: true,
+    };
+    this.socketLogs.send(JSON.stringify(logObject));
+  };
+
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
     const projectName = apiRequest.originalUrl.split('/')[1];
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
     const { endpoints } = this.config.entities;
     const { projects } = this.config.entities;
 
-    const mockedEndpoint = getMockedEndpointForQuery(projects, endpoints, apiRequest);
+    const mockedEndpoints = getMockedEndpointForQuery(projects, endpoints, apiRequest);
 
-    if (project && project.urlPrefix && !mockedEndpoint) {
+    if (project && project.urlPrefix && !mockedEndpoints) {
       this.forwardRequest(apiRequest, response);
-    } else if (mockedEndpoint) {
-      const firstMocked = mockedEndpoint[0];
+    } else if (mockedEndpoints) {
+      const firstMocked = mockedEndpoints[0];
+
+      if (mockedEndpoints && mockedEndpoints.length > 1) {
+        this.sendLogForMockedRequest();
+      }
       this.sendMockedRequest(apiRequest, response, projectName, firstMocked);
     } else {
       this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
