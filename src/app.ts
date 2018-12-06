@@ -408,9 +408,8 @@ class App {
 
     if (project && project.urlPrefix && !mockedEndpoints) {
       this.forwardRequest(apiRequest, response);
-    } else if (mockedEndpoints) {
+    } else if (mockedEndpoints && mockedEndpoints.length > 0) {
       const firstMocked = mockedEndpoints[0];
-
       if (mockedEndpoints && mockedEndpoints.length > 1) {
         this.sendLogForMockedRequest();
       }
