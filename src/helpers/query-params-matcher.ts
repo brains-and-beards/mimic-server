@@ -7,7 +7,7 @@ import { parseQuery } from './query-parser';
  * @param url url of the requests
  * @returns the path extracted from url
  */
-const extractPathForURL = (url: string) => {
+export const extractPathForURL = (url: string) => {
   const projectName = url.split('/')[1];
   // Remove query parameters from url
   const requestEndpoint = url.split('?')[0];
@@ -20,7 +20,7 @@ const extractPathForURL = (url: string) => {
  * @param project The projects with the endpoint ID list
  * @returns the endpoints of the given project or null if no endpoints are available
  */
-const endpointsInProject = (endpoints: Readonly<any>, project: IProject) => {
+export const endpointsInProject = (endpoints: Readonly<any>, project: IProject) => {
   if (!endpoints || !project || !project.endpoints) {
     return null;
   }
@@ -48,7 +48,7 @@ const endpointsInProject = (endpoints: Readonly<any>, project: IProject) => {
  * @param requestQuery query params of the request
  * @returns true if all the parameters that are present in the mocked endpoint present in the request
  */
-const findQueryMatches = (currentEndpointParams: string, requestQuery: any) => {
+export const findQueryMatches = (currentEndpointParams: string, requestQuery: any) => {
   const parsed = parseQuery(currentEndpointParams);
   const parsedKeys = Object.keys(parsed);
   const requestQueryKeys = Object.keys(requestQuery);
@@ -59,7 +59,7 @@ const findQueryMatches = (currentEndpointParams: string, requestQuery: any) => {
       const currentValue = parsed[currentKey];
       const valueInRequest = requestQuery[currentKey];
 
-      if (currentValue !== valueInRequest) {
+      if (currentValue.toString() !== valueInRequest.toString()) {
         match = false;
       }
     } else {
