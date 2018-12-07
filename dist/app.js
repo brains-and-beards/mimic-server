@@ -1,1 +1,375 @@
-"use strict";var __importDefault=this&&this.__importDefault||function(t){return t&&t.__esModule?t:{default:t}};Object.defineProperty(exports,"__esModule",{value:!0});const express_1=__importDefault(require("express")),body_parser_1=__importDefault(require("body-parser")),http_1=__importDefault(require("http")),lodash_1=__importDefault(require("lodash")),zeromq_1=require("zeromq"),moment_1=__importDefault(require("moment")),fs_1=__importDefault(require("fs")),request_1=__importDefault(require("request")),host_parser_1=require("./helpers/host-parser");class App{constructor(t){this.config={entities:{endpoints:[],projects:[]},result:{httpPort:3e3,httpsPort:3001}},this.endpointsParams=new Map,this.endpointsBody=new Map,this.endpointsResponse=new Map,this.isListening=(()=>!!this.httpServer&&this.httpServer.listening),this.stop=(t=>{const e=e=>{if(!e){const t={type:0,message:"STOP",date:moment_1.default().format("YYYY/MM/DD HH:mm:ss"),matched:!0};this.socketLogs.send(JSON.stringify(t))}t(e)};this.httpServer&&this.httpServer.close(e),this.sslServer&&this.sslServer.close(e)}),this.start=(t=>{if(this.httpServer=http_1.default.createServer(this.express),this.httpServer.listen(this.port,e=>{if(!e){const t={type:0,message:"START",date:moment_1.default().format("YYYY/MM/DD HH:mm:ss"),matched:!0};this.socketLogs.send(JSON.stringify(t))}t(e)}).on("error",t=>{this.errorHandler.checkErrorAndStopProcess(t)}),fs_1.default.existsSync("./localhost.key")&&fs_1.default.existsSync("./localhost.crt")){fs_1.default.readFileSync("./localhost.key"),fs_1.default.readFileSync("./localhost.crt")}}),this.handleUIMessage=(t=>{switch(Number(t.toString())){case 0:return this.stop(this.handleError);case 1:return this.start(this.handleError)}}),this.handleError=(t=>{if(!t)return;const e={type:0,message:`ERROR ${t}`,matched:!0,date:moment_1.default().format("YYYY/MM/DD HH:mm:ss")};this.socketLogs.send(JSON.stringify(e))}),this.setupServer(this.config);const e="/tmp/apimocker_server";fs_1.default.existsSync(e)||fs_1.default.mkdirSync(e),this.errorHandler=t,this.socket=zeromq_1.socket("pull"),this.socket.connect(`ipc://${e}/commands.ipc`),this.socket.on("message",this.handleUIMessage),this.socketLogs=zeromq_1.socket("push"),this.socketLogs.bindSync(`ipc://${e}/logs.ipc`)}setupServer(t){this.config=t;const{httpPort:e,httpsPort:s}=t.result;this.port=e||3e3,this.sslPort=s||3001,this.express=express_1.default(),this.express.use(body_parser_1.default.raw({type:"*/*"})),this.mountRoutes()}mountRoutes(){const{endpoints:t,projects:e}=this.config.entities;lodash_1.default.forEach(t,t=>{const s=e[t.projectId],r="/"+s.name+t.path;this.register(t,s.name),this.parseEndpointResponse(t,r),this.parseParamsEndpoint(t,r),this.parseBodyEndpoint(t,r)}),this.express.use("/",(t,e,s)=>{this.handleMissedRoute(t,e)})}parseEndpointResponse(t,e){t.request.params?this.endpointsResponse.set(t.method+e+t.request.params,t.response):t.request.body&&!lodash_1.default.isEqual(t.request.body,{})?this.endpointsResponse.set(t.method+e+JSON.stringify(t.request.body),t.response):this.endpointsResponse.set(t.method+e,t.response)}parseParamsEndpoint(t,e){const s=this.endpointsParams.get(e),r=s&&s.length>0?s:[];r.push(t.request.params),this.endpointsParams.set(e,r)}parseBodyEndpoint(t,e){const s=this.endpointsBody.get(e),r=s&&s.length>0?s:[];r.push(t.request.body),this.endpointsBody.set(e,r)}getAppropriateListenerFunction(t){if("delete"===t)return this.express.delete.bind(this.express);if("get"===t)return this.express.get.bind(this.express);if("patch"===t)return this.express.patch.bind(this.express);if("post"===t)return this.express.post.bind(this.express);if("put"===t)return this.express.put.bind(this.express);throw new Error("[getAppropriateListenerFunction] Unexpected API method to listen for")}sendLog(t,e,s,r,o){const i={method:t.method,path:t.path,body:t.body,matched:e,protocol:t.protocol,host:t.hostname,date:moment_1.default().format("YYYY/MM/DD HH:mm:ss"),port:parseInt(this.port.toString(),10),query:t.query,type:s,statusCode:r,response:o};this.socketLogs.send(JSON.stringify(i))}register(t,e=""){const s="/"+e+t.path,r=t.method.toLowerCase();this.getAppropriateListenerFunction(r)(s,(e,s)=>{const r=this.getResponseBodyByParams(e);if(r){const o={requestObject:e,responseObject:s,statusCode:t.statusCode||200,timeout:t.timeout||0,responseBody:r};this.sendResponse(o)}else this.handleMissedRoute(e,s)})}getResponseBodyByParams(t){if(t.query&&!lodash_1.default.isEmpty(t.query)){return this.paramsExists(this.endpointsParams.get(t.path),t)?this.endpointsResponse.get(t.method+t.path+this.parseQueryToString(t.query)):void 0}if(t.body&&!lodash_1.default.isEmpty(t.body)){const e=t.body.toString("utf8");return this.bodyExists(this.endpointsBody.get(t.path),e)?this.isJsonString(e)?this.endpointsResponse.get(t.method+t.path+JSON.stringify(JSON.parse(e))):this.endpointsResponse.get(t.method+t.path+`"${e}"`):void 0}return this.endpointsResponse.get(t.method+t.path)}sendResponse(t){const{responseObject:e,requestObject:s,statusCode:r,timeout:o,responseBody:i}=t;o>0?setTimeout(()=>e.status(r).send(i),o):e.status(r).send(i),this.sendLog(s,!0,1,t.statusCode)}isJsonString(t){try{JSON.parse(t)}catch(t){return!1}return!0}bodyExists(t,e){let s=!1;return t.forEach(t=>{this.isJsonString(e)?lodash_1.default.isEqual(e,{})&&lodash_1.default.isEqual(t,e)?s=!0:lodash_1.default.isEqual(t,JSON.parse(e))&&(s=!0):lodash_1.default.isEqual(t,e)&&(s=!0)}),s}paramsExists(t,e){let s=!1;return t&&t.forEach(t=>{lodash_1.default.isEqual(this.parseQuery(t),e.query)&&(s=!0)}),s}parseQuery(t){if(t.length>0){const e={},s=("?"===t[0]?t.substr(1):t).split("&");for(const t of s){const s=t.split("=");e[decodeURIComponent(s[0])]=decodeURIComponent(s[1]||"")}return e}return{}}parseQueryToString(t){return"?"+Object.keys(t).reduce((e,s)=>(e.push(s+"="+encodeURIComponent(t[s])),e),[]).join("&")}handleMissedRoute(t,e){const s=t.originalUrl.split("/")[1],r=lodash_1.default.find(this.config.entities.projects,t=>t.name===s);r&&r.urlPrefix?this.forwardRequest(t,e):(this.sendLog(t,!1,2,404),e.status(404).send("Not found"))}getForwardingOptions(t){const[,e,...s]=t.originalUrl.split("/"),r=lodash_1.default.find(this.config.entities.projects,t=>t.name===e),{urlPrefix:o}=r,i=`${o}${o.endsWith("/")?"":"/"}${s.join("/")}`,n=host_parser_1.parseHost(i);return{headers:Object.assign({},t.headers,{host:n}),method:t.method,body:"GET"===t.method?null:t.body,uri:i}}forwardRequest(t,e){const s=this.getForwardingOptions(t);request_1.default(s,(e,r,o)=>{const i=r.headers["content-encoding"];i&&i.includes("gzip")?this.forwardGzipRequest(s,t):e?this.sendLog(t,!1,3,0,e.toString()):this.sendLog(t,!0,2,r&&r.statusCode?r.statusCode:418,o.toString())}).pipe(e)}forwardGzipRequest(t,e){request_1.default(Object.assign({},t,{gzip:!0}),(t,s,r)=>{t?this.sendLog(e,!1,3,0,t.toString()):this.sendLog(e,!0,2,s&&s.statusCode?s.statusCode:418,r.toString())})}}exports.default=App;
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+/* tslint:disable:no-console */
+const express_1 = __importDefault(require("express"));
+const body_parser_1 = __importDefault(require("body-parser"));
+const http_1 = __importDefault(require("http"));
+const lodash_1 = __importDefault(require("lodash"));
+const zeromq_1 = require("zeromq");
+const moment_1 = __importDefault(require("moment"));
+const fs_1 = __importDefault(require("fs"));
+const request_1 = __importDefault(require("request"));
+const host_parser_1 = require("./helpers/host-parser");
+const query_params_matcher_1 = require("./helpers/query-params-matcher");
+const query_parser_1 = require("./helpers/query-parser");
+class App {
+    constructor(errorHandler) {
+        this.config = {
+            entities: { endpoints: [], projects: [] },
+            result: { httpPort: 3000, httpsPort: 3001 },
+        };
+        this.endpointsParams = new Map();
+        this.endpointsBody = new Map();
+        this.endpointsResponse = new Map();
+        this.isListening = () => {
+            return this.httpServer ? this.httpServer.listening : false;
+        };
+        this.stop = (callback) => {
+            const afterStop = (error) => {
+                if (!error) {
+                    const logObject = {
+                        type: 0 /* SERVER */,
+                        message: 'STOP',
+                        date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                        matched: true,
+                    };
+                    this.socketLogs.send(JSON.stringify(logObject));
+                }
+                callback(error);
+            };
+            if (this.httpServer)
+                this.httpServer.close(afterStop);
+            if (this.sslServer)
+                this.sslServer.close(afterStop);
+        };
+        this.start = (callback) => {
+            const afterStart = (error) => {
+                if (!error) {
+                    const logObject = {
+                        type: 0 /* SERVER */,
+                        message: 'START',
+                        date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                        matched: true,
+                    };
+                    this.socketLogs.send(JSON.stringify(logObject));
+                }
+                callback(error);
+            };
+            this.httpServer = http_1.default.createServer(this.express);
+            this.httpServer.listen(this.port, afterStart).on('error', (error) => {
+                this.errorHandler.checkErrorAndStopProcess(error);
+            });
+            if (fs_1.default.existsSync('./localhost.key') && fs_1.default.existsSync('./localhost.crt')) {
+                const sslOptions = {
+                    key: fs_1.default.readFileSync('./localhost.key'),
+                    cert: fs_1.default.readFileSync('./localhost.crt'),
+                };
+                // TODO: We should get proper Android support before we launch SSL support
+                // this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
+            }
+        };
+        this.handleUIMessage = (message) => {
+            const messageCode = Number(message.toString());
+            switch (messageCode) {
+                case 0 /* STOP */:
+                    return this.stop(this.handleError);
+                case 1 /* START */:
+                    return this.start(this.handleError);
+                default:
+            }
+        };
+        this.handleError = (error) => {
+            if (!error)
+                return;
+            const logObject = {
+                type: 0 /* SERVER */,
+                message: `ERROR ${error}`,
+                matched: true,
+                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+            };
+            this.socketLogs.send(JSON.stringify(logObject));
+        };
+        this.sendMockedRequest = (apiRequest, response, projectName, mockedEndpoint) => {
+            const protocol = apiRequest.protocol;
+            const hostName = apiRequest.hostname;
+            const port = this.port;
+            const path = mockedEndpoint.path;
+            const params = mockedEndpoint.request.params || '';
+            const constructedURL = `${protocol}://${hostName}:${port}/${projectName}${path}${params}`;
+            const constructedRequest = {
+                headers: Object.assign({}, apiRequest.headers),
+                method: apiRequest.method,
+                body: apiRequest.method === 'GET' ? null : apiRequest.body,
+                uri: constructedURL,
+            };
+            request_1.default(constructedRequest).pipe(response);
+        };
+        this.sendLogForMockedRequest = () => {
+            const logObject = {
+                type: 0 /* SERVER */,
+                message: 'WARNING - Multiple mocked endpoints found',
+                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+                matched: true,
+                isWarning: true,
+            };
+            this.socketLogs.send(JSON.stringify(logObject));
+        };
+        this.setupServer(this.config);
+        const socketsDir = '/tmp/apimocker_server';
+        if (!fs_1.default.existsSync(socketsDir))
+            fs_1.default.mkdirSync(socketsDir);
+        this.errorHandler = errorHandler;
+        this.socket = zeromq_1.socket('pull');
+        this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
+        this.socket.on('message', this.handleUIMessage);
+        this.socketLogs = zeromq_1.socket('push');
+        this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
+    }
+    setupServer(config) {
+        this.config = config;
+        const { httpPort, httpsPort } = config.result;
+        this.port = httpPort || 3000;
+        this.sslPort = httpsPort || 3001;
+        this.express = express_1.default();
+        this.express.use(body_parser_1.default.raw({ type: '*/*' }));
+        this.mountRoutes();
+    }
+    mountRoutes() {
+        const { endpoints, projects } = this.config.entities;
+        lodash_1.default.forEach(endpoints, (endpoint) => {
+            const project = projects[endpoint.projectId];
+            const endpointPath = '/' + project.name + endpoint.path;
+            this.register(endpoint, project.name);
+            this.parseEndpointResponse(endpoint, endpointPath);
+            this.parseParamsEndpoint(endpoint, endpointPath);
+            this.parseBodyEndpoint(endpoint, endpointPath);
+        });
+        // Handle non-mocked routes
+        this.express.use('/', (req, res, _next) => {
+            this.handleMissedRoute(req, res);
+        });
+    }
+    parseEndpointResponse(endpoint, endpointPath) {
+        if (endpoint.request.params) {
+            this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
+        }
+        else if (endpoint.request.body && !lodash_1.default.isEqual(endpoint.request.body, {})) {
+            this.endpointsResponse.set(endpoint.method + endpointPath + JSON.stringify(endpoint.request.body), endpoint.response);
+        }
+        else {
+            this.endpointsResponse.set(endpoint.method + endpointPath, endpoint.response);
+        }
+    }
+    parseParamsEndpoint(endpoint, endpointPath) {
+        const existingEndpointParams = this.endpointsParams.get(endpointPath);
+        const params = existingEndpointParams && existingEndpointParams.length > 0 ? existingEndpointParams : [];
+        params.push(endpoint.request.params);
+        this.endpointsParams.set(endpointPath, params);
+    }
+    parseBodyEndpoint(endpoint, endpointPath) {
+        const bodyValues = this.endpointsBody.get(endpointPath);
+        const bodyArray = bodyValues && bodyValues.length > 0 ? bodyValues : [];
+        bodyArray.push(endpoint.request.body);
+        this.endpointsBody.set(endpointPath, bodyArray);
+    }
+    getAppropriateListenerFunction(method) {
+        if (method === 'delete')
+            return this.express.delete.bind(this.express);
+        if (method === 'get')
+            return this.express.get.bind(this.express);
+        if (method === 'patch')
+            return this.express.patch.bind(this.express);
+        if (method === 'post')
+            return this.express.post.bind(this.express);
+        if (method === 'put')
+            return this.express.put.bind(this.express);
+        throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
+    }
+    sendLog(req, matched, type, statusCode, respBody) {
+        const log = {
+            method: req.method,
+            path: req.path,
+            body: req.body,
+            matched,
+            protocol: req.protocol,
+            host: req.hostname,
+            date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
+            port: parseInt(this.port.toString(), 10),
+            query: req.query,
+            type,
+            statusCode,
+            response: respBody,
+        };
+        this.socketLogs.send(JSON.stringify(log));
+    }
+    register(endpoint, scope = '') {
+        const path = '/' + scope + endpoint.path;
+        const method = endpoint.method.toLowerCase();
+        const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
+        httpMethodListenerFunction(path, (req, res) => {
+            const body = this.getResponseBodyByParams(req);
+            if (body) {
+                const responseData = {
+                    requestObject: req,
+                    responseObject: res,
+                    statusCode: endpoint.statusCode || 200,
+                    timeout: endpoint.timeout || 0,
+                    responseBody: body,
+                };
+                this.sendResponse(responseData);
+            }
+            else {
+                this.handleMissedRoute(req, res);
+            }
+        });
+    }
+    // We return `undefined` when there's no match for query / body request parameters
+    getResponseBodyByParams(req) {
+        if (req.query && !lodash_1.default.isEmpty(req.query)) {
+            const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
+            return paramExists
+                ? this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query))
+                : undefined;
+        }
+        else if (req.body && !lodash_1.default.isEmpty(req.body)) {
+            const requestBody = req.body.toString('utf8');
+            const bodyExists = this.bodyExists(this.endpointsBody.get(req.path), requestBody);
+            if (bodyExists) {
+                return this.isJsonString(requestBody)
+                    ? this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody)))
+                    : this.endpointsResponse.get(req.method + req.path + `"${requestBody}"`);
+            }
+            else {
+                return undefined;
+            }
+        }
+        else {
+            // for requests without body or params
+            return this.endpointsResponse.get(req.method + req.path);
+        }
+    }
+    sendResponse(response) {
+        const { responseObject, requestObject, statusCode, timeout, responseBody } = response;
+        if (timeout > 0) {
+            setTimeout(() => responseObject.status(statusCode).send(responseBody), timeout);
+        }
+        else {
+            responseObject.status(statusCode).send(responseBody);
+        }
+        this.sendLog(requestObject, true, 1 /* REQUEST */, response.statusCode);
+    }
+    isJsonString(str) {
+        try {
+            JSON.parse(str);
+        }
+        catch (e) {
+            return false;
+        }
+        return true;
+    }
+    bodyExists(bodyForEndpoint, requestBody) {
+        let bodyExists = false;
+        bodyForEndpoint.forEach((body) => {
+            if (this.isJsonString(requestBody)) {
+                if (lodash_1.default.isEqual(requestBody, {}) && lodash_1.default.isEqual(body, requestBody)) {
+                    bodyExists = true;
+                }
+                else if (lodash_1.default.isEqual(body, JSON.parse(requestBody))) {
+                    bodyExists = true;
+                }
+            }
+            else {
+                if (lodash_1.default.isEqual(body, requestBody)) {
+                    bodyExists = true;
+                }
+            }
+        });
+        return bodyExists;
+    }
+    paramsExists(paramsForEndpoint, req) {
+        let paramExists = false;
+        if (paramsForEndpoint) {
+            paramsForEndpoint.forEach((param) => {
+                if (lodash_1.default.isEqual(query_parser_1.parseQuery(param), req.query)) {
+                    paramExists = true;
+                }
+            });
+        }
+        return paramExists;
+    }
+    parseQueryToString(obj) {
+        return ('?' +
+            Object.keys(obj)
+                .reduce((a, k) => {
+                a.push(k + '=' + encodeURIComponent(obj[k]));
+                return a;
+            }, [])
+                .join('&'));
+    }
+    handleMissedRoute(apiRequest, response) {
+        const projectName = apiRequest.originalUrl.split('/')[1];
+        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+        const { endpoints } = this.config.entities;
+        const { projects } = this.config.entities;
+        const mockedEndpoints = query_params_matcher_1.getMockedEndpointForQuery(projects, endpoints, apiRequest);
+        if (project && project.urlPrefix && !mockedEndpoints) {
+            this.forwardRequest(apiRequest, response);
+        }
+        else if (mockedEndpoints && mockedEndpoints.length > 0) {
+            const firstMocked = mockedEndpoints[0];
+            if (mockedEndpoints && mockedEndpoints.length > 1) {
+                this.sendLogForMockedRequest();
+            }
+            this.sendMockedRequest(apiRequest, response, projectName, firstMocked);
+        }
+        else {
+            this.sendLog(apiRequest, false, 2 /* RESPONSE */, 404);
+            response.status(404).send('Not found');
+        }
+    }
+    getForwardingOptions(req) {
+        const [, projectName, ...localPath] = req.originalUrl.split('/');
+        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+        const { urlPrefix } = project;
+        const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;
+        const host = host_parser_1.parseHost(url);
+        return {
+            headers: Object.assign({}, req.headers, { host }),
+            method: req.method,
+            body: req.method === 'GET' ? null : req.body,
+            uri: url,
+        };
+    }
+    forwardRequest(req, responseStream) {
+        const options = this.getForwardingOptions(req);
+        request_1.default(options, (error, response, body) => {
+            const contentEncoding = response.headers['content-encoding'];
+            if (contentEncoding && contentEncoding.includes('gzip')) {
+                this.forwardGzipRequest(options, req);
+            }
+            else {
+                if (error) {
+                    this.sendLog(req, false, 3 /* ERROR */, 0, error.toString());
+                }
+                else {
+                    this.sendLog(req, true, 2 /* RESPONSE */, response && response.statusCode ? response.statusCode : 418, body.toString());
+                }
+            }
+        }).pipe(responseStream);
+    }
+    forwardGzipRequest(options, req) {
+        request_1.default(Object.assign({}, options, { gzip: true }), (error, response, body) => {
+            if (error) {
+                this.sendLog(req, false, 3 /* ERROR */, 0, error.toString());
+            }
+            else {
+                this.sendLog(req, true, 2 /* RESPONSE */, response && response.statusCode ? response.statusCode : 418, body.toString());
+            }
+        });
+    }
+}
+exports.default = App;
+//# sourceMappingURL=app.js.map
