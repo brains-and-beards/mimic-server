@@ -104,8 +104,7 @@ export const getMockedEndpointForQuery = (
       continue;
     }
 
-    const match = findQueryMatches(currentEndpoint.request.params, apiRequest.query);
-    if (match) {
+    if (findQueryMatches(currentEndpoint.request.params, apiRequest.query)) {
       matches.push(currentEndpoint);
     }
   }
