@@ -8,10 +8,10 @@ import { socket } from 'zeromq';
 import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
-import ErrorHandler from './errors/error-handler';
-import { parseHost } from './helpers/host-parser';
-import { getMockedEndpointForQuery } from './helpers/query-params-matcher';
-import { parseQuery } from './helpers/query-parser';
+import ErrorHandler from './errors/errorHandler';
+import { parseHost } from './helpers/hostParser';
+import { getMockedEndpointForQuery } from './helpers/queryParamsMatcher';
+import { parseQuery } from './helpers/queryParser';
 
 export const enum MessageTypes {
   STOP,
