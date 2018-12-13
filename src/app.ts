@@ -396,7 +396,7 @@ class App {
 
     const host = parseHost(url);
     return {
-      headers: { ...req.headers, host },
+      headers: { ...req.headers, host, 'accept-encoding': '' },
       method: req.method,
       body: req.method === 'GET' ? null : req.body,
       uri: url,
