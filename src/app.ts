@@ -363,6 +363,14 @@ class App {
     );
   }
 
+  private createBuffer = (body?: string) => {
+    return Buffer.from(JSON.stringify(body));
+  };
+
+  private lengthForBuffer = (body?: string) => {
+    return Buffer.byteLength(JSON.stringify(body), 'gzip');
+  };
+
   private sendMockedRequest = (
     apiRequest: express.Request,
     response: express.Response,
@@ -377,10 +385,16 @@ class App {
 
     const constructedURL = `${protocol}://${hostName}:${port}/${projectName}${path}${params}`;
 
+    const buffer = this.createBuffer(mockedEndpoint.request.body);
+    const bufferLength = this.lengthForBuffer(mockedEndpoint.request.body);
+
+    const headers = apiRequest.headers;
+    headers['content-length'] = String(bufferLength);
+
     const constructedRequest = {
-      headers: { ...apiRequest.headers },
+      headers,
       method: apiRequest.method,
-      body: apiRequest.method === 'GET' ? null : apiRequest.body,
+      body: apiRequest.method === 'GET' ? null : buffer,
       uri: constructedURL,
     };
 
