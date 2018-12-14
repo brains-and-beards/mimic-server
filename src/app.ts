@@ -254,7 +254,9 @@ class App {
 
     const httpMethodListenerFunction = this.getAppropriateListenerFunction(method);
     httpMethodListenerFunction(path, (req: express.Request, res: any) => {
-      const body = this.getResponseBodyByParams(req);
+      const body = path.includes('*')
+        ? this.getResponseBodyByParams(path, req)
+        : this.getResponseBodyByParams(req.path, req);
       if (body) {
         const responseData: IResponseData = {
           requestObject: req,
@@ -271,28 +273,27 @@ class App {
     });
   }
 
-  // We return `undefined` when there's no match for query / body request parameters
-  private getResponseBodyByParams(req: express.Request): string | undefined | object {
+  private getResponseBodyByParams(path: string, req: express.Request): string | undefined | object {
     if (req.query && !_.isEmpty(req.query)) {
-      const paramExists = this.paramsExists(this.endpointsParams.get(req.path), req);
+      const paramExists = this.paramsExists(this.endpointsParams.get(path), req);
 
       return paramExists
-        ? this.endpointsResponse.get(req.method + req.path + this.parseQueryToString(req.query))
+        ? this.endpointsResponse.get(req.method + path + this.parseQueryToString(req.query))
         : undefined;
     } else if (req.body && !_.isEmpty(req.body)) {
       const requestBody = req.body.toString('utf8');
-      const bodyExists = this.bodyExists(this.endpointsBody.get(req.path), requestBody);
+      const bodyExists = this.bodyExists(this.endpointsBody.get(path), requestBody);
 
       if (bodyExists) {
         return this.isJsonString(requestBody)
-          ? this.endpointsResponse.get(req.method + req.path + JSON.stringify(JSON.parse(requestBody)))
-          : this.endpointsResponse.get(req.method + req.path + `"${requestBody}"`);
+          ? this.endpointsResponse.get(req.method + path + JSON.stringify(JSON.parse(requestBody)))
+          : this.endpointsResponse.get(req.method + path + `"${requestBody}"`);
       } else {
         return undefined;
       }
     } else {
       // for requests without body or params
-      return this.endpointsResponse.get(req.method + req.path);
+      return this.endpointsResponse.get(req.method + path);
     }
   }
 
