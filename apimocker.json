@@ -8,82 +8,19 @@
       "endpoints": [
         {
           "uuid": "71ac9340-d616-11e8-b6fb-555fa73c0bbd",
-          "path": "/dddd",
+          "path": "/dddd/*/a",
           "method": "GET",
-          "response": {},
+          "response": { "a": 3 },
           "request": { "body": {}, "params": "" },
-          "statusCode": 200,
-          "timeout": 0
-        },
-        {
-          "uuid": "79bb6930-d616-11e8-b6fb-555fa73c0bbd",
-          "path": "/a",
-          "method": "GET",
-          "response": { "hey": "I am working" },
-          "request": { "body": {}, "params": "?para=2" },
-          "statusCode": 200,
-          "timeout": 0
-        },
-        {
-          "uuid": "f91f1af0-d616-11e8-8e8b-af224076217e",
-          "path": "/a",
-          "method": "GET",
-          "response": { "single": "forever alone" },
-          "request": { "body": {}, "params": "" },
-          "statusCode": 200,
-          "timeout": 0
-        },
-        {
-          "uuid": "2d8e9130-d617-11e8-8e8b-af224076217e",
-          "path": "/a",
-          "method": "POST",
-          "response": { "nanan": 2 },
-          "request": { "body": { "djdj": 2 }, "params": "" },
-          "statusCode": 200,
-          "timeout": 0
-        },
-        {
-          "uuid": "762e2e50-d617-11e8-8b83-3fb282517a21",
-          "path": "/a",
-          "method": "GET",
-          "response": "no heeejka",
-          "request": { "body": {}, "params": "?koko=2" },
-          "statusCode": 200,
-          "timeout": 0
-        },
-        {
-          "uuid": "209d3a80-d892-11e8-9788-5b0e7fd26175",
-          "path": "/a",
-          "method": "GET",
-          "response": { "no": "wiadomoo" },
-          "request": { "body": {}, "params": "?natalia=superjest" },
-          "statusCode": 200,
-          "timeout": 0
-        },
-        {
-          "uuid": "58b7f550-d91d-11e8-966d-03e47e07715c",
-          "path": "/a",
-          "method": "GET",
-          "response": { "koko": 2 },
-          "request": { "body": {}, "params": "?bb=2&koko=2" },
-          "statusCode": 200,
-          "timeout": 0
-        },
-        {
-          "uuid": "a4f097b0-d91d-11e8-966d-03e47e07715c",
-          "path": "/a",
-          "method": "POST",
-          "response": "sssss",
-          "request": { "body": { "z": 2 }, "params": "" },
           "statusCode": 200,
           "timeout": 0
         },
         {
           "uuid": "d90c96c0-db8e-11e8-9d00-e1d7b720d4e7",
           "path": "/a",
-          "method": "POST",
+          "method": "GET",
           "response": {},
-          "request": { "body": "mama", "params": "" },
+          "request": { "body": "", "params": "" },
           "statusCode": 200,
           "timeout": 0
         }
