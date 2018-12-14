@@ -17,7 +17,7 @@ const normalizr_1 = require("normalizr");
 const util_1 = require("util");
 const app_1 = __importDefault(require("./app"));
 const DataSchema_1 = require("./Models/DataSchema");
-const error_handler_1 = __importDefault(require("./errors/error-handler"));
+const errorHandler_1 = __importDefault(require("./errors/errorHandler"));
 class Server {
     constructor(filename, handleErrors) {
         this.readFileAsync = util_1.promisify(fs_1.default.readFile);
@@ -77,7 +77,7 @@ class Server {
                 return console.log(`server is listening`);
             });
         };
-        this.errorHandler = new error_handler_1.default(handleErrors);
+        this.errorHandler = new errorHandler_1.default(handleErrors);
         this.app = new app_1.default(this.errorHandler);
         if (!filename) {
             process.env.NODE_ENV === 'test'
