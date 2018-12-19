@@ -12,6 +12,7 @@ import ErrorHandler from './errors/errorHandler';
 import { parseHost } from './helpers/hostParser';
 import { getMockedEndpointForQuery } from './helpers/queryParamsMatcher';
 import { parseQuery } from './helpers/queryParser';
+import { sendMockedRequest } from './helpers/mockRequestAssembler';
 
 export const enum MessageTypes {
   STOP,
@@ -364,44 +365,6 @@ class App {
     );
   }
 
-  private createBuffer = (body?: string) => {
-    return Buffer.from(JSON.stringify(body));
-  };
-
-  private lengthForBuffer = (body?: string) => {
-    return Buffer.byteLength(JSON.stringify(body), 'gzip');
-  };
-
-  private sendMockedRequest = (
-    apiRequest: express.Request,
-    response: express.Response,
-    projectName: string,
-    mockedEndpoint: IEndpoint
-  ) => {
-    const protocol = apiRequest.protocol;
-    const hostName = apiRequest.hostname;
-    const port = this.port;
-    const path = mockedEndpoint.path;
-    const params = mockedEndpoint.request.params || '';
-
-    const constructedURL = `${protocol}://${hostName}:${port}/${projectName}${path}${params}`;
-
-    const buffer = this.createBuffer(mockedEndpoint.request.body);
-    const bufferLength = this.lengthForBuffer(mockedEndpoint.request.body);
-
-    const headers = apiRequest.headers;
-    headers['content-length'] = String(bufferLength);
-
-    const constructedRequest = {
-      headers,
-      method: apiRequest.method,
-      body: apiRequest.method === 'GET' ? null : buffer,
-      uri: constructedURL,
-    };
-
-    request(constructedRequest).pipe(response);
-  };
-
   private sendLogForMockedRequest = () => {
     const logObject: ILog = {
       type: LogTypes.SERVER,
@@ -428,7 +391,7 @@ class App {
       if (mockedEndpoints && mockedEndpoints.length > 1) {
         this.sendLogForMockedRequest();
       }
-      this.sendMockedRequest(apiRequest, response, projectName, firstMocked);
+      sendMockedRequest(apiRequest, response, projectName, firstMocked, this.port);
     } else {
       this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
       response.status(404).send('Not found');
