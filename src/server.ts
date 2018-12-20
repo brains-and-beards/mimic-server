@@ -5,7 +5,7 @@ import { promisify } from 'util';
 
 import App from './app';
 import { ConfigSchema } from './Models/DataSchema';
-import ErrorHandler from './errors/error-handler';
+import ErrorHandler from './errors/errorHandler';
 
 class Server {
   readFileAsync = promisify(fs.readFile);

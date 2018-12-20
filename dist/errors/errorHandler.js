@@ -22,4 +22,4 @@ class ErrorHandler {
     }
 }
 exports.default = ErrorHandler;
-//# sourceMappingURL=error-handler.js.map
+//# sourceMappingURL=errorHandler.js.map

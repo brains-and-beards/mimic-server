@@ -16,4 +16,4 @@ const extractHostname = (url) => {
 exports.parseHost = (url) => {
     return extractHostname(url);
 };
-//# sourceMappingURL=host-parser.js.map
+//# sourceMappingURL=hostParser.js.map

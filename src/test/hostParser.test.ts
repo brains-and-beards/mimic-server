@@ -1,4 +1,4 @@
-import { parseHost } from '../helpers/host-parser';
+import { parseHost } from '../helpers/hostParser';
 
 describe('Tests for Host Parser', () => {
   it('Advanced url test', async () => {

@@ -8,8 +8,11 @@ import { socket } from 'zeromq';
 import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
-import ErrorHandler from './errors/error-handler';
-import { parseHost } from './helpers/host-parser';
+import ErrorHandler from './errors/errorHandler';
+import { parseHost } from './helpers/hostParser';
+import { getMockedEndpointForQuery } from './helpers/queryParamsMatcher';
+import { parseQuery } from './helpers/queryParser';
+import { sendMockedRequest } from './helpers/mockRequestAssembler';
 
 export const enum MessageTypes {
   STOP,
@@ -40,6 +43,7 @@ interface ILog {
   readonly message?: string;
   readonly headers?: any;
   readonly url?: string;
+  readonly isWarning?: boolean;
 }
 
 interface IResponseData {
@@ -340,27 +344,13 @@ class App {
     let paramExists = false;
     if (paramsForEndpoint) {
       paramsForEndpoint.forEach((param: string) => {
-        if (_.isEqual(this.parseQuery(param), req.query)) {
+        if (_.isEqual(parseQuery(param), req.query)) {
           paramExists = true;
         }
       });
     }
 
     return paramExists;
-  }
-
-  private parseQuery(queryString: string) {
-    if (queryString.length > 0) {
-      const query: any = {};
-      const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
-      for (const item of pairs) {
-        const pair: any = item.split('=');
-        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
-      }
-      return query;
-    } else {
-      return {};
-    }
   }
 
   private parseQueryToString(obj: any) {
@@ -375,12 +365,33 @@ class App {
     );
   }
 
+  private sendLogForMockedRequest = () => {
+    const logObject: ILog = {
+      type: LogTypes.SERVER,
+      message: 'WARNING - Multiple mocked endpoints found',
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
+      matched: true,
+      isWarning: true,
+    };
+    this.socketLogs.send(JSON.stringify(logObject));
+  };
+
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
     const projectName = apiRequest.originalUrl.split('/')[1];
     const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+    const { endpoints } = this.config.entities;
+    const { projects } = this.config.entities;
 
-    if (project && project.urlPrefix) {
+    const mockedEndpoints = getMockedEndpointForQuery(projects, endpoints, apiRequest);
+
+    if (project && project.urlPrefix && !mockedEndpoints) {
       this.forwardRequest(apiRequest, response);
+    } else if (mockedEndpoints && mockedEndpoints.length > 0) {
+      const firstMocked = mockedEndpoints[0];
+      if (mockedEndpoints && mockedEndpoints.length > 1) {
+        this.sendLogForMockedRequest();
+      }
+      sendMockedRequest(apiRequest, response, projectName, firstMocked, this.port);
     } else {
       this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
       response.status(404).send('Not found');
@@ -393,8 +404,8 @@ class App {
     const { urlPrefix } = project;
 
     const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;
-
     const host = parseHost(url);
+
     return {
       headers: { ...req.headers, host, 'accept-encoding': '' },
       method: req.method,
