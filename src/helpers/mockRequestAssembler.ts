@@ -15,10 +15,14 @@ const createBuffer = (body?: string) => {
 
 /**
  * Calculates the length for request's Buffer in bytes using gzip format
+ * @param method method of the new requests
  * @param body parameter in string format
  * @returns the size of the Buffer
  */
-const lengthForBuffer = (body?: string) => {
+const lengthForBuffer = (method: string, body?: string) => {
+  if (method.toUpperCase() === 'GET') {
+    return 0;
+  }
   return Buffer.byteLength(JSON.stringify(body), 'gzip');
 };
 
@@ -74,7 +78,7 @@ export const sendMockedRequest = (
 ) => {
   const constructedURL = constructURL(apiRequest, mockedEndpoint, port, projectName);
   const buffer = createBuffer(mockedEndpoint.request.body);
-  const bufferLength = lengthForBuffer(mockedEndpoint.request.body);
+  const bufferLength = lengthForBuffer(apiRequest.method, mockedEndpoint.request.body);
 
   const headers = apiRequest.headers;
   headers[kContentLengthKey] = String(bufferLength);
