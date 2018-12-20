@@ -1,15 +1,20 @@
 import express from 'express';
 import request from 'request';
 import { IncomingHttpHeaders } from 'http';
+import _ from 'lodash';
 
 const kContentLengthKey = 'content-length';
 
 /**
  * Converts string body to request compatible Buffer format
  * @param body string which should be converted
- * @returns the Buffer required for body parameter in HTTP requests
+ * @returns the Buffer required for body parameter in HTTP requests or undefined if the body is empty
  */
 const createBuffer = (body?: string) => {
+  if (!body || _.isEmpty(body)) {
+    return undefined;
+  }
+
   return Buffer.from(JSON.stringify(body));
 };
 
@@ -17,10 +22,10 @@ const createBuffer = (body?: string) => {
  * Calculates the length for request's Buffer in bytes using gzip format
  * @param method method of the new requests
  * @param body parameter in string format
- * @returns the size of the Buffer
+ * @returns the size of the Buffer or 0 if the Buffer is empty
  */
 const lengthForBuffer = (method: string, body?: string) => {
-  if (method.toUpperCase() === 'GET') {
+  if (method.toUpperCase() === 'GET' || _.isEmpty(body)) {
     return 0;
   }
   return Buffer.byteLength(JSON.stringify(body), 'gzip');
@@ -51,7 +56,7 @@ const constructURL = (apiRequest: express.Request, mockedEndpoint: IEndpoint, po
  * @param uri the path to forward the request to
  * @returns the size of the Buffer
  */
-const constructRequest = (headers: IncomingHttpHeaders, method: string, buffer: Buffer, uri: string) => {
+const constructRequest = (headers: IncomingHttpHeaders, method: string, uri: string, buffer?: Buffer) => {
   return {
     headers,
     method,
@@ -83,7 +88,7 @@ export const sendMockedRequest = (
   const headers = apiRequest.headers;
   headers[kContentLengthKey] = String(bufferLength);
 
-  const constructedRequest = constructRequest(headers, apiRequest.method, buffer, constructedURL);
+  const constructedRequest = constructRequest(headers, apiRequest.method, constructedURL, buffer);
 
   request(constructedRequest).pipe(response);
 };
