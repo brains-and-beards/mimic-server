@@ -10,7 +10,7 @@ const kContentLengthKey = 'content-length';
  * @param body string which should be converted
  * @returns the Buffer required for body parameter in HTTP requests or undefined if the body is empty
  */
-const createBuffer = (body?: string) => {
+export const createBuffer = (body?: string) => {
   if (!body || _.isEmpty(body)) {
     return undefined;
   }
@@ -24,8 +24,8 @@ const createBuffer = (body?: string) => {
  * @param body parameter in string format
  * @returns the size of the Buffer or 0 if the Buffer is empty
  */
-const lengthForBuffer = (method: string, body?: string) => {
-  if (method.toUpperCase() === 'GET' || _.isEmpty(body)) {
+export const lengthForBuffer = (method: string, body?: string) => {
+  if (method.toUpperCase() === 'GET' || method.toUpperCase() === 'DELETE' || _.isEmpty(body)) {
     return 0;
   }
   return Buffer.byteLength(JSON.stringify(body), 'gzip');
@@ -39,7 +39,7 @@ const lengthForBuffer = (method: string, body?: string) => {
  * @param projectName name of the matching project
  * @returns the new URL which point to our mocked endpoint
  */
-const constructURL = (apiRequest: express.Request, mockedEndpoint: IEndpoint, port: number, projectName: string) => {
+export const constructURL = (apiRequest: express.Request, mockedEndpoint: IEndpoint, port: number, projectName: string) => {
   const protocol = apiRequest.protocol;
   const hostName = apiRequest.hostname;
   const path = mockedEndpoint.path;
