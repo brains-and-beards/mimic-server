@@ -15,6 +15,7 @@ const request_1 = __importDefault(require("request"));
 const hostParser_1 = require("./helpers/hostParser");
 const queryParamsMatcher_1 = require("./helpers/queryParamsMatcher");
 const queryParser_1 = require("./helpers/queryParser");
+const mockRequestAssembler_1 = require("./helpers/mockRequestAssembler");
 class App {
     constructor(errorHandler) {
         this.config = {
@@ -91,31 +92,6 @@ class App {
                 date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
             };
             this.socketLogs.send(JSON.stringify(logObject));
-        };
-        this.createBuffer = (body) => {
-            return Buffer.from(JSON.stringify(body));
-        };
-        this.lengthForBuffer = (body) => {
-            return Buffer.byteLength(JSON.stringify(body), 'gzip');
-        };
-        this.sendMockedRequest = (apiRequest, response, projectName, mockedEndpoint) => {
-            const protocol = apiRequest.protocol;
-            const hostName = apiRequest.hostname;
-            const port = this.port;
-            const path = mockedEndpoint.path;
-            const params = mockedEndpoint.request.params || '';
-            const constructedURL = `${protocol}://${hostName}:${port}/${projectName}${path}${params}`;
-            const buffer = this.createBuffer(mockedEndpoint.request.body);
-            const bufferLength = this.lengthForBuffer(mockedEndpoint.request.body);
-            const headers = apiRequest.headers;
-            headers['content-length'] = String(bufferLength);
-            const constructedRequest = {
-                headers,
-                method: apiRequest.method,
-                body: apiRequest.method === 'GET' ? null : buffer,
-                uri: constructedURL,
-            };
-            request_1.default(constructedRequest).pipe(response);
         };
         this.sendLogForMockedRequest = () => {
             const logObject = {
@@ -334,7 +310,7 @@ class App {
             if (mockedEndpoints && mockedEndpoints.length > 1) {
                 this.sendLogForMockedRequest();
             }
-            this.sendMockedRequest(apiRequest, response, projectName, firstMocked);
+            mockRequestAssembler_1.sendMockedRequest(apiRequest, response, projectName, firstMocked, this.port);
         }
         else {
             this.sendLog(apiRequest, false, 2 /* RESPONSE */, 404);

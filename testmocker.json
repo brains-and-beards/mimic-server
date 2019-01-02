@@ -100,7 +100,7 @@
           "uuid": "706cc470-d8f42s-11e8-a2ef-f7f1b7w6er2b8",
           "path": "/empty",
           "method": "POST",
-          "response": {},
+          "response": "alma",
           "request": { "body": { "param": "value" }, "params": "" },
           "statusCode": 200,
           "timeout": 1000
