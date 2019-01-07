@@ -114,8 +114,11 @@ export const getMockedEndpointForQuery = (
     const currentMethod = currentEndpoint.method;
     const currentBody = simplifyBody(JSON.stringify(currentEndpoint.request.body));
 
+    const bodiesDontMatch = requestBody !== currentBody;
+    const shouldCheckBodies = currentMethod.toUpperCase() === 'POST' || currentMethod.toUpperCase() === 'PUT';
+
     // If path, method or body doesn't match go to next endpoint
-    if (currentPath !== requestPath || currentMethod !== requestMethod || requestBody !== currentBody) {
+    if (currentPath !== requestPath || currentMethod !== requestMethod || (bodiesDontMatch && shouldCheckBodies)) {
       continue;
     }
 

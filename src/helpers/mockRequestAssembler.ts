@@ -1,24 +1,33 @@
 import express from 'express';
 import request from 'request';
 import { IncomingHttpHeaders } from 'http';
+import _ from 'lodash';
 
 const kContentLengthKey = 'content-length';
 
 /**
  * Converts string body to request compatible Buffer format
  * @param body string which should be converted
- * @returns the Buffer required for body parameter in HTTP requests
+ * @returns the Buffer required for body parameter in HTTP requests or undefined if the body is empty
  */
-const createBuffer = (body?: string) => {
+export const createBuffer = (body?: string) => {
+  if (!body || _.isEmpty(body)) {
+    return undefined;
+  }
+
   return Buffer.from(JSON.stringify(body));
 };
 
 /**
  * Calculates the length for request's Buffer in bytes using gzip format
+ * @param method method of the new requests
  * @param body parameter in string format
- * @returns the size of the Buffer
+ * @returns the size of the Buffer or 0 if the Buffer is empty
  */
-const lengthForBuffer = (body?: string) => {
+export const lengthForBuffer = (method: string, body?: string) => {
+  if (method.toUpperCase() === 'GET' || method.toUpperCase() === 'DELETE' || _.isEmpty(body)) {
+    return 0;
+  }
   return Buffer.byteLength(JSON.stringify(body), 'gzip');
 };
 
@@ -30,7 +39,7 @@ const lengthForBuffer = (body?: string) => {
  * @param projectName name of the matching project
  * @returns the new URL which point to our mocked endpoint
  */
-const constructURL = (apiRequest: express.Request, mockedEndpoint: IEndpoint, port: number, projectName: string) => {
+export const constructURL = (apiRequest: express.Request, mockedEndpoint: IEndpoint, port: number, projectName: string) => {
   const protocol = apiRequest.protocol;
   const hostName = apiRequest.hostname;
   const path = mockedEndpoint.path;
@@ -47,7 +56,7 @@ const constructURL = (apiRequest: express.Request, mockedEndpoint: IEndpoint, po
  * @param uri the path to forward the request to
  * @returns the size of the Buffer
  */
-const constructRequest = (headers: IncomingHttpHeaders, method: string, buffer: Buffer, uri: string) => {
+const constructRequest = (headers: IncomingHttpHeaders, method: string, uri: string, buffer?: Buffer) => {
   return {
     headers,
     method,
@@ -74,12 +83,12 @@ export const sendMockedRequest = (
 ) => {
   const constructedURL = constructURL(apiRequest, mockedEndpoint, port, projectName);
   const buffer = createBuffer(mockedEndpoint.request.body);
-  const bufferLength = lengthForBuffer(mockedEndpoint.request.body);
+  const bufferLength = lengthForBuffer(apiRequest.method, mockedEndpoint.request.body);
 
   const headers = apiRequest.headers;
   headers[kContentLengthKey] = String(bufferLength);
 
-  const constructedRequest = constructRequest(headers, apiRequest.method, buffer, constructedURL);
+  const constructedRequest = constructRequest(headers, apiRequest.method, constructedURL, buffer);
 
   request(constructedRequest).pipe(response);
 };

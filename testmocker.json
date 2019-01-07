@@ -7,6 +7,15 @@
       "name": "test",
       "endpoints": [
         {
+          "uuid": "83699e72-0472-11e9-8eb2-f2801f1b9fd1",
+          "path": "/num",
+          "method": "PATCH",
+          "response": { "hey": "I am working with body", "num": 8, "valid": false },
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
+        },
+        {
           "uuid": "79bb6930-d616-11e8-b6fb-555fa73c0bb1d",
           "path": "/object",
           "method": "GET",
@@ -91,7 +100,7 @@
           "uuid": "706cc470-d8f42s-11e8-a2ef-f7f1b7w6er2b8",
           "path": "/empty",
           "method": "POST",
-          "response": {},
+          "response": "alma",
           "request": { "body": { "param": "value" }, "params": "" },
           "statusCode": 200,
           "timeout": 1000
