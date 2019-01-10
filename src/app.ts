@@ -411,6 +411,7 @@ class App {
       method: req.method,
       body: req.method === 'GET' ? null : req.body,
       uri: url,
+      rejectUnauthorized: false,
     };
   }
 
