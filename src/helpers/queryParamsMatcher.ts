@@ -110,20 +110,22 @@ export const getMockedEndpointForQuery = (
   const matches = [];
   const requestBody = simplifyBody(String(apiRequest.body));
   for (const currentEndpoint of projectEndpoints) {
-    const currentPath = currentEndpoint.path;
-    const currentMethod = currentEndpoint.method;
-    const currentBody = simplifyBody(JSON.stringify(currentEndpoint.request.body));
+    if (currentEndpoint.enable) {
+      const currentPath = currentEndpoint.path;
+      const currentMethod = currentEndpoint.method;
+      const currentBody = simplifyBody(JSON.stringify(currentEndpoint.request.body));
 
-    const bodiesDontMatch = requestBody !== currentBody;
-    const shouldCheckBodies = currentMethod.toUpperCase() === 'POST' || currentMethod.toUpperCase() === 'PUT';
+      const bodiesDontMatch = requestBody !== currentBody;
+      const shouldCheckBodies = currentMethod.toUpperCase() === 'POST' || currentMethod.toUpperCase() === 'PUT';
 
-    // If path, method or body doesn't match go to next endpoint
-    if (currentPath !== requestPath || currentMethod !== requestMethod || (bodiesDontMatch && shouldCheckBodies)) {
-      continue;
-    }
+      // If path, method or body doesn't match go to next endpoint
+      if (currentPath !== requestPath || currentMethod !== requestMethod || (bodiesDontMatch && shouldCheckBodies)) {
+        continue;
+      }
 
-    if (findQueryMatches(currentEndpoint.request.params, apiRequest.query)) {
-      matches.push(currentEndpoint);
+      if (findQueryMatches(currentEndpoint.request.params, apiRequest.query)) {
+        matches.push(currentEndpoint);
+      }
     }
   }
 

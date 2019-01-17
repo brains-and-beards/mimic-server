@@ -263,6 +263,7 @@ class App {
       const body = path.includes('*')
         ? this.getResponseBodyByParams(path, req)
         : this.getResponseBodyByParams(req.path, req);
+
       if (body) {
         const responseData: IResponseData = {
           requestObject: req,
