@@ -180,13 +180,15 @@ class App {
   private mountRoutes(): void {
     const { endpoints, projects } = this.config.entities;
     _.forEach(endpoints, (endpoint: IEndpoint) => {
-      const project = projects[endpoint.projectId];
-      const endpointPath = '/' + project.name + endpoint.path;
+      if (endpoint.enable) {
+        const project = projects[endpoint.projectId];
+        const endpointPath = '/' + project.name + endpoint.path;
 
-      this.register(endpoint, project.name);
-      this.parseEndpointResponse(endpoint, endpointPath);
-      this.parseParamsEndpoint(endpoint, endpointPath);
-      this.parseBodyEndpoint(endpoint, endpointPath);
+        this.register(endpoint, project.name);
+        this.parseEndpointResponse(endpoint, endpointPath);
+        this.parseParamsEndpoint(endpoint, endpointPath);
+        this.parseBodyEndpoint(endpoint, endpointPath);
+      }
     });
 
     // Handle non-mocked routes
@@ -261,6 +263,7 @@ class App {
       const body = path.includes('*')
         ? this.getResponseBodyByParams(path, req)
         : this.getResponseBodyByParams(req.path, req);
+
       if (body) {
         const responseData: IResponseData = {
           requestObject: req,

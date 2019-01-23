@@ -7,4 +7,5 @@ interface IEndpoint {
   readonly statusCode: number;
   readonly timeout: number;
   readonly uuid: string;
+  readonly enable: boolean;
 }

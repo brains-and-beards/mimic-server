@@ -13,7 +13,8 @@
           "response": { "a": 3 },
           "request": { "body": {}, "params": "" },
           "statusCode": 200,
-          "timeout": 0
+          "timeout": 0,
+          "enable": true
         },
         {
           "uuid": "d90c96c0-db8e-11e8-9d00-e1d7b720d4e7",
@@ -22,7 +23,8 @@
           "response": {},
           "request": { "body": "", "params": "" },
           "statusCode": 200,
-          "timeout": 0
+          "timeout": 0,
+          "enable": false
         }
       ]
     },
