@@ -106,7 +106,7 @@ class App {
     return this.httpServer ? this.httpServer.listening : false;
   };
 
-  stop = (callback: ((error: Error) => void)) => {
+  stop = (callback: (error: Error) => void) => {
     const afterStop = (error: Error) => {
       if (!error) {
         const logObject: ILog = {
@@ -124,7 +124,7 @@ class App {
     if (this.sslServer) this.sslServer.close(afterStop);
   };
 
-  start = (callback: ((error: Error) => void)) => {
+  start = (callback: (error: Error) => void) => {
     const afterStart = (error: Error) => {
       if (!error) {
         const logObject: ILog = {
@@ -179,6 +179,7 @@ class App {
 
   private mountRoutes(): void {
     const { endpoints, projects } = this.config.entities;
+    this.resetMaps();
     _.forEach(endpoints, (endpoint: IEndpoint) => {
       if (endpoint.enable) {
         const project = projects[endpoint.projectId];
@@ -195,6 +196,12 @@ class App {
     this.express.use('/', (req: express.Request, res: any, _next: any) => {
       this.handleMissedRoute(req, res);
     });
+  }
+
+  private resetMaps() {
+    this.endpointsParams = new Map<string, any>();
+    this.endpointsBody = new Map<string, any>();
+    this.endpointsResponse = new Map<string, any>();
   }
 
   private parseEndpointResponse(endpoint: IEndpoint, endpointPath: string) {
