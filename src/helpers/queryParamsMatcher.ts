@@ -95,7 +95,7 @@ export const getMockedEndpointForQuery = (
   projects: Readonly<any>,
   endpoints: Readonly<any>,
   apiRequest: express.Request
-): IEndpoint[] => {
+): ReadonlyArray<IEndpoint> => {
   const projectName = apiRequest.originalUrl.split('/')[1];
   const requestPath = extractPathForURL(apiRequest.originalUrl);
   const requestMethod = apiRequest.method;
