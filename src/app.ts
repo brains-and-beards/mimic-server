@@ -393,12 +393,11 @@ class App {
     const { projects } = this.config.entities;
 
     const mockedEndpoints = getMockedEndpointForQuery(projects, endpoints, apiRequest);
-
-    if (project && project.urlPrefix && !mockedEndpoints) {
+    if (project && project.urlPrefix && mockedEndpoints.length === 0) {
       this.forwardRequest(apiRequest, response);
-    } else if (mockedEndpoints && mockedEndpoints.length > 0) {
+    } else if (mockedEndpoints.length > 0) {
       const firstMocked = mockedEndpoints[0];
-      if (mockedEndpoints && mockedEndpoints.length > 1) {
+      if (mockedEndpoints.length > 1) {
         this.sendLogForMockedRequest();
       }
       sendMockedRequest(apiRequest, response, projectName, firstMocked, this.port);
