@@ -125,11 +125,12 @@ class App {
         this.mountRoutes();
     }
     mountRoutes() {
-        const { endpoints, projects } = this.config.entities;
+        const { endpoints, externalProjects, projects } = this.config.entities;
+        const allProjects = projects.concat(externalProjects);
         this.resetMaps();
         lodash_1.default.forEach(endpoints, (endpoint) => {
             if (endpoint.enable) {
-                const project = projects[endpoint.projectId];
+                const project = allProjects[endpoint.projectId];
                 const endpointPath = '/' + project.name + endpoint.path;
                 this.register(endpoint, project.name);
                 this.parseEndpointResponse(endpoint, endpointPath);

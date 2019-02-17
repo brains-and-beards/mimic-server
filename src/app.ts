@@ -180,11 +180,13 @@ class App {
   };
 
   private mountRoutes(): void {
-    const { endpoints, projects } = this.config.entities;
+    const { endpoints, externalProjects, projects } = this.config.entities;
+    const allProjects = projects.concat(externalProjects);
+
     this.resetMaps();
     _.forEach(endpoints, (endpoint: IEndpoint) => {
       if (endpoint.enable) {
-        const project = projects[endpoint.projectId];
+        const project = allProjects[endpoint.projectId];
         const endpointPath = '/' + project.name + endpoint.path;
 
         this.register(endpoint, project.name);
