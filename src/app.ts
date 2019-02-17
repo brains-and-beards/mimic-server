@@ -8,11 +8,13 @@ import { socket } from 'zeromq';
 import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
+
 import ErrorHandler from './errors/errorHandler';
 import { parseHost } from './helpers/hostParser';
 import { getMockedEndpointForQuery } from './helpers/queryParamsMatcher';
 import { parseQuery } from './helpers/queryParser';
 import { sendMockedRequest } from './helpers/mockRequestAssembler';
+import { findProject, getNameFromQuery } from './services/QueryResolver';
 
 export const enum MessageTypes {
   STOP,
@@ -62,7 +64,7 @@ class App {
   // @ts-ignore
   private express: express.Express;
   private config: IConfig = {
-    entities: { endpoints: [], projects: [] },
+    entities: { endpoints: [], projects: [], externalProjects: [] },
     result: { httpPort: 3000, httpsPort: 3001 },
   };
   private httpServer?: HTTP.Server;
@@ -387,10 +389,8 @@ class App {
   };
 
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
-    const projectName = apiRequest.originalUrl.split('/')[1];
-    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
-    const { endpoints } = this.config.entities;
-    const { projects } = this.config.entities;
+    const { endpoints, projects, externalProjects } = this.config.entities;
+    const project = findProject(projects.concat(externalProjects), apiRequest.originalUrl);
 
     const mockedEndpoints = getMockedEndpointForQuery(projects, endpoints, apiRequest);
     if (project && project.urlPrefix && mockedEndpoints.length === 0) {
@@ -400,17 +400,23 @@ class App {
       if (mockedEndpoints.length > 1) {
         this.sendLogForMockedRequest();
       }
+
+      const projectName = getNameFromQuery(apiRequest.originalUrl);
       sendMockedRequest(apiRequest, response, projectName, firstMocked, this.port);
     } else {
       this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
+
+      const projectName = getNameFromQuery(apiRequest.originalUrl);
       response.status(404).send(project ? `URL endpoint not found` : `Project "${projectName}" not found`);
     }
   }
 
   private getForwardingOptions(req: express.Request) {
-    const [, projectName, ...localPath] = req.originalUrl.split('/');
-    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
-    const { urlPrefix } = project;
+    const { externalProjects, projects } = this.config.entities;
+
+    const [, , ...localPath] = req.originalUrl.split('/');
+    const project = findProject(projects.concat(externalProjects), req.originalUrl);
+    const { urlPrefix } = project!;
 
     const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;
     const host = parseHost(url);

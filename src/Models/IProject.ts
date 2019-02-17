@@ -1,5 +1,6 @@
 interface IProject {
-  readonly uuid: string;
+  readonly endpoints: ReadonlyArray<IEndpoint>;
   readonly name: string;
-  readonly endpoints: ReadonlyArray<string>;
+  readonly urlPrefix: string;
+  readonly uuid: string;
 }
