@@ -322,7 +322,7 @@ class App {
         }
         else {
             this.sendLog(apiRequest, false, 2 /* RESPONSE */, 404);
-            response.status(404).send('Not found');
+            response.status(404).send(project ? `URL endpoint not found` : `Project "${projectName}" not found`);
         }
     }
     getForwardingOptions(req) {
