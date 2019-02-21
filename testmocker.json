@@ -389,6 +389,15 @@
           "statusCode": 200,
           "timeout": 0,
           "enable": true
+        },
+        {
+          "uuid": "bffbfd2f-284f-48ce-8e66-896a503ea8dc",
+          "path": "/disabled",
+          "method": "GET",
+          "response": "response with params",
+          "request": { "body": { "param": "value" }, "params": "" },
+          "statusCode": 200,
+          "timeout": 0
         }
       ]
     },
