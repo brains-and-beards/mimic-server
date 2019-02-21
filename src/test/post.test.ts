@@ -58,7 +58,7 @@ describe('Tests for testmocker.json - POST', () => {
   it('[POST - body request] - Should return 200 for empty body', async () => {
     const res = await request(projectBasePath)
       .post('/empty')
-      .send({ param: 'value' })
+      .send({})
       .expect(200)
       .expect('Content-Type', contentTypeJSON);
     expect(typeof res.body).toBe('object');
