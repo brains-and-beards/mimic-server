@@ -16,11 +16,10 @@ const hostParser_1 = require("./helpers/hostParser");
 const queryParamsMatcher_1 = require("./helpers/queryParamsMatcher");
 const queryParser_1 = require("./helpers/queryParser");
 const mockRequestAssembler_1 = require("./helpers/mockRequestAssembler");
-const QueryResolver_1 = require("./services/QueryResolver");
 class App {
     constructor(errorHandler) {
         this.config = {
-            entities: { endpoints: [], projects: [], externalProjects: [] },
+            entities: { endpoints: [], projects: [] },
             result: { httpPort: 3000, httpsPort: 3001 },
         };
         this.endpointsParams = new Map();
@@ -125,12 +124,11 @@ class App {
         this.mountRoutes();
     }
     mountRoutes() {
-        const { endpoints, externalProjects, projects } = this.config.entities;
-        const allProjects = projects.concat(externalProjects);
+        const { endpoints, projects } = this.config.entities;
         this.resetMaps();
         lodash_1.default.forEach(endpoints, (endpoint) => {
             if (endpoint.enable) {
-                const project = allProjects[endpoint.projectId];
+                const project = projects[endpoint.projectId];
                 const endpointPath = '/' + project.name + endpoint.path;
                 this.register(endpoint, project.name);
                 this.parseEndpointResponse(endpoint, endpointPath);
@@ -307,8 +305,10 @@ class App {
                 .join('&'));
     }
     handleMissedRoute(apiRequest, response) {
-        const { endpoints, projects, externalProjects } = this.config.entities;
-        const project = QueryResolver_1.findProject(projects.concat(externalProjects), apiRequest.originalUrl);
+        const projectName = apiRequest.originalUrl.split('/')[1];
+        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+        const { endpoints } = this.config.entities;
+        const { projects } = this.config.entities;
         const mockedEndpoints = queryParamsMatcher_1.getMockedEndpointForQuery(projects, endpoints, apiRequest);
         if (project && project.urlPrefix && mockedEndpoints.length === 0) {
             this.forwardRequest(apiRequest, response);
@@ -318,19 +318,16 @@ class App {
             if (mockedEndpoints.length > 1) {
                 this.sendLogForMockedRequest();
             }
-            const projectName = QueryResolver_1.getNameFromQuery(apiRequest.originalUrl);
             mockRequestAssembler_1.sendMockedRequest(apiRequest, response, projectName, firstMocked, this.port);
         }
         else {
             this.sendLog(apiRequest, false, 2 /* RESPONSE */, 404);
-            const projectName = QueryResolver_1.getNameFromQuery(apiRequest.originalUrl);
-            response.status(404).send(project ? `URL endpoint not found` : `Project "${projectName}" not found`);
+            response.status(404).send('Not found');
         }
     }
     getForwardingOptions(req) {
-        const { externalProjects, projects } = this.config.entities;
-        const [, , ...localPath] = req.originalUrl.split('/');
-        const project = QueryResolver_1.findProject(projects.concat(externalProjects), req.originalUrl);
+        const [, projectName, ...localPath] = req.originalUrl.split('/');
+        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
         const { urlPrefix } = project;
         const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;
         const host = hostParser_1.parseHost(url);

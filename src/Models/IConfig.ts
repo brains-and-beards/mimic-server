@@ -1,8 +1,7 @@
 interface IConfig {
   entities: {
-    endpoints: ReadonlyArray<IEndpoint>;
-    projects: ReadonlyArray<IProject>;
-    externalProjects: ReadonlyArray<IProject>;
+    endpoints: Readonly<any>;
+    projects: Readonly<any>;
   };
   result: {
     httpPort: number;
