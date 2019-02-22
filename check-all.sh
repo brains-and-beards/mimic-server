@@ -19,6 +19,7 @@ if yarn start-test & yarn test > /dev/null; then
   echo 👍 tests SUCCESS
   pkill node "yarn start-test"
   else
+    pkill node "yarn start-test"
     echo ⛔ tests FAILED
     exit 0;
 fi
