@@ -1,4 +1,4 @@
-import { extractPathForURL, endpointsInProject, findQueryMatches, simplifyBody } from '../helpers/queryParamsMatcher';
+import { extractPathForURL, endpointsInProject, findQueryMatches } from '../helpers/queryParamsMatcher';
 
 const testEndpoints = {
   '71ac9340-d616-11e8-b6fb-555fa73c0bbd': {
@@ -121,31 +121,5 @@ describe('Tests for Query Params matcher', () => {
     const requestQuery = { region: 'europe', test: 12 };
     const match = findQueryMatches(endpointQuery, requestQuery);
     expect(match).toEqual(false);
-  });
-  it('Body simplifier - empty test', async () => {
-    const body = undefined;
-    const simplified = simplifyBody(body);
-    expect(simplified).toEqual(undefined);
-  });
-  it('Body simplifier - simple string test', async () => {
-    const body = 'test';
-    const simplified = simplifyBody(body);
-    expect(simplified).toEqual('test');
-  });
-  it('Body simplifier - simple body test', async () => {
-    const body = 'test: 23';
-    const simplified = simplifyBody(body);
-    expect(simplified).toEqual('test: 23');
-  });
-  it('Body simplifier - quote test', async () => {
-    const body = '\"test\": \"23\"';
-    const simplified = simplifyBody(body);
-    expect(simplified).toEqual('test: 23');
-  });
-  it('Body simplifier - white space test', async () => {
-    const body = '     test: 23' +
-      '';
-    const simplified = simplifyBody(body);
-    expect(simplified).toEqual('test: 23');
   });
 });

@@ -94,11 +94,11 @@ describe('Tests for testmocker.json - POST', () => {
     expect(typeof res.body.valid).toBe('boolean');
     expect(res.body.valid).toBe(false);
   });
-  it('[POST - body request] - Should return 404 with wrong parameters - JSON response', async () => {
+  it('[POST - body request] - Should return 200 with wrong parameters - JSON response', async () => {
     const res = await request(projectBasePath)
       .post('/object')
       .send({ param: 'value1' })
-      .expect(404);
+      .expect(200);
   });
   it('[POST - body request] - Should return 200 with raw response with specific string', async () => {
     const res = await request(projectBasePath)
@@ -108,11 +108,11 @@ describe('Tests for testmocker.json - POST', () => {
       .expect('Content-Type', contentTypeText);
     expect(res.text).toBe('response with params');
   });
-  it('[POST - body request] - Should return 404 with wrong request body - raw response', async () => {
+  it('[POST - body request] - Should return 200 with wrong request body - raw response', async () => {
     const res = await request(projectBasePath)
       .post('/string')
       .send({ param: 'value1' })
-      .expect(404);
+      .expect(200);
   });
   it('[POST - body request] - Should return 404', async () => {
     const res = await request(projectBasePath)
@@ -142,10 +142,10 @@ describe('Tests for testmocker.json - POST', () => {
     expect(res.body.guys[9].age).toEqual(39);
   });
 
-  it('[POST - body request] - Should return 400 with long JSON response with wrong body JSON request', async () => {
+  it('[POST - body request] - Should return 200 with long JSON response with wrong body JSON request', async () => {
     const res = await request(projectBasePath)
       .post('/longResponse')
       .send({ param: 'value1' })
-      .expect(404);
+      .expect(200);
   });
 });
