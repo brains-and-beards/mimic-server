@@ -71,19 +71,6 @@ export const findQueryMatches = (currentEndpointParams: string, requestQuery: an
 };
 
 /**
- * Removes whitespace and quote characters from request's body.
- * @param body the body which should be converted
- * @returns the trimmed body without quote characters
- */
-export const simplifyBody = (body?: string) => {
-  if (body) {
-    return body.trim().replace(/["']/g, '');
-  } else {
-    return undefined;
-  }
-};
-
-/**
  * If all the parameters that are present in the mocked endpoint present in the request too we should use
  * the mocked endpoint even if the request has some additional parameters
  * @param projects all projects from config file, the current projected based on the request should be selected.
@@ -108,18 +95,12 @@ export const getMockedEndpointForQuery = (
   }
 
   const matches = [];
-  const requestBody = simplifyBody(String(apiRequest.body));
   for (const currentEndpoint of projectEndpoints) {
     if (currentEndpoint.enable) {
       const currentPath = currentEndpoint.path;
       const currentMethod = currentEndpoint.method;
-      const currentBody = simplifyBody(JSON.stringify(currentEndpoint.request.body));
-
-      const bodiesDontMatch = requestBody !== currentBody;
-      const shouldCheckBodies = currentMethod.toUpperCase() === 'POST' || currentMethod.toUpperCase() === 'PUT';
-
       // If path, method or body doesn't match go to next endpoint
-      if (currentPath !== requestPath || currentMethod !== requestMethod || (bodiesDontMatch && shouldCheckBodies)) {
+      if (currentPath !== requestPath || currentMethod !== requestMethod) {
         continue;
       }
 

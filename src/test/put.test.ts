@@ -98,17 +98,17 @@ describe('Tests for testmocker.json - GET', () => {
       .put('/unknown')
       .expect(404);
   });
-  it('[PUT - send JSON] - Should return 404 with wrong request data', async () => {
+  it('[PUT - send JSON] - Should return 200 with wrong request data', async () => {
     const res = await request(projectBasePath)
       .put('/object')
       .send({ data: 'wrong value' })
-      .expect(404);
+      .expect(200);
   });
-  it('[PUT - send raw] - Should return 404 with wrong request data', async () => {
+  it('[PUT - send raw] - Should return 200 with wrong request data', async () => {
     const res = await request(projectBasePath)
       .put('/object')
       .send('wrong raw text')
-      .expect(404);
+      .expect(200);
   });
 
   it('[PUT] - Should return 404', async () => {
