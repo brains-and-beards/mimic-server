@@ -44,7 +44,11 @@ class Server {
       externals.push(...parsedExternal.projects);
     }
 
-    return { config: JSON.parse(data), externalProjects: externals };
+    if (parsed && parsed.projects) {
+      parsed.projects.push(...externals);
+    }
+
+    return { config: parsed };
   }
 
   private watchConfigForChanges = (configPath: string) => {
@@ -64,7 +68,7 @@ class Server {
     this.readFile(this.configFilePath)
       .then(data => {
         const config = this.parseConfig(data.config);
-        this.restartServer(config, data.externalProjects);
+        this.restartServer(config);
       })
       .catch(error => {
         this.errorHandler.checkErrorAndStopProcess(error);
@@ -83,16 +87,16 @@ class Server {
       });
   };
 
-  private restartServer = (config: IConfig, externalProjects: ReadonlyArray<IExternalProject>) => {
+  private restartServer = (config: IConfig) => {
     if (this.app.isListening()) {
-      this.stopServer(() => this._startServer(config, externalProjects));
+      this.stopServer(() => this._startServer(config));
     } else {
-      this._startServer(config, externalProjects);
+      this._startServer(config);
     }
   };
 
-  private _startServer = (config: IConfig, externalProjects: ReadonlyArray<IExternalProject>) => {
-    this.app.setupServer(config, externalProjects);
+  private _startServer = (config: IConfig) => {
+    this.app.setupServer(config);
 
     this.app.start(error => {
       if (error) {

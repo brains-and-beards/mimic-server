@@ -90,7 +90,7 @@ class App {
     this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
   }
 
-  setupServer(config: IConfig, externalProjects: ReadonlyArray<IExternalProject> = []) {
+  setupServer(config: IConfig) {
     this.config = config;
 
     const { httpPort, httpsPort } = config.result;
@@ -100,7 +100,7 @@ class App {
     this.express = express();
     this.express.use(bodyParser.raw({ type: '*/*' }));
 
-    this.mountRoutes(externalProjects);
+    this.mountRoutes();
   }
 
   isListening = (): boolean => {
@@ -178,7 +178,7 @@ class App {
     this.socketLogs.send(JSON.stringify(logObject));
   };
 
-  private mountRoutes(externalProjects: ReadonlyArray<IExternalProject>): void {
+  private mountRoutes(): void {
     const { endpoints, projects } = this.config.entities;
     this.resetMaps();
     _.forEach(endpoints, (endpoint: IEndpoint) => {
@@ -193,15 +193,6 @@ class App {
       }
     });
 
-    _.forEach(externalProjects, (project: IExternalProject) => {
-      _.forEach(project.endpoints, (endpoint: IEndpoint) => {
-        const endpointPath = '/' + project.name + endpoint.path;
-        this.register(endpoint, project.name);
-        this.parseEndpointResponse(endpoint, endpointPath);
-        this.parseParamsEndpoint(endpoint, endpointPath);
-        this.parseBodyEndpoint(endpoint, endpointPath);
-      });
-    });
 
     // Handle non-mocked routes
     this.express.use('/', (req: express.Request, res: any, _next: any) => {
