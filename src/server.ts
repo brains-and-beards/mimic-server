@@ -35,7 +35,16 @@ class Server {
 
   private async readFile(configPath: string) {
     const data = await this.readFileAsync(configPath, { encoding: 'utf-8' });
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    const externals = [];
+
+    for (const item of parsed.externalProjects) {
+      const external = await this.readFileAsync(item.path, { encoding: 'utf-8' });
+      const parsedExternal = JSON.parse(external);
+      externals.push(...parsedExternal.projects);
+    }
+
+    return { config: JSON.parse(data), externalProjects: externals };
   }
 
   private watchConfigForChanges = (configPath: string) => {
@@ -53,9 +62,9 @@ class Server {
 
   private readAndStart = () => {
     this.readFile(this.configFilePath)
-      .then(json => {
-        const config = this.parseConfig(json);
-        this.restartServer(config);
+      .then(data => {
+        const config = this.parseConfig(data.config);
+        this.restartServer(config, data.externalProjects);
       })
       .catch(error => {
         this.errorHandler.checkErrorAndStopProcess(error);
@@ -74,16 +83,16 @@ class Server {
       });
   };
 
-  private restartServer = (config: IConfig) => {
+  private restartServer = (config: IConfig, externalProjects: ReadonlyArray<IExternalProject>) => {
     if (this.app.isListening()) {
-      this.stopServer(() => this._startServer(config));
+      this.stopServer(() => this._startServer(config, externalProjects));
     } else {
-      this._startServer(config);
+      this._startServer(config, externalProjects);
     }
   };
 
-  private _startServer = (config: IConfig) => {
-    this.app.setupServer(config);
+  private _startServer = (config: IConfig, externalProjects: ReadonlyArray<IExternalProject>) => {
+    this.app.setupServer(config, externalProjects);
 
     this.app.start(error => {
       if (error) {

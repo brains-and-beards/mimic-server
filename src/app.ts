@@ -90,7 +90,7 @@ class App {
     this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
   }
 
-  setupServer(config: IConfig) {
+  setupServer(config: IConfig, externalProjects: ReadonlyArray<IExternalProject> = []) {
     this.config = config;
 
     const { httpPort, httpsPort } = config.result;
@@ -99,7 +99,8 @@ class App {
 
     this.express = express();
     this.express.use(bodyParser.raw({ type: '*/*' }));
-    this.mountRoutes();
+
+    this.mountRoutes(externalProjects);
   }
 
   isListening = (): boolean => {
@@ -177,7 +178,7 @@ class App {
     this.socketLogs.send(JSON.stringify(logObject));
   };
 
-  private mountRoutes(): void {
+  private mountRoutes(externalProjects: ReadonlyArray<IExternalProject>): void {
     const { endpoints, projects } = this.config.entities;
     this.resetMaps();
     _.forEach(endpoints, (endpoint: IEndpoint) => {
@@ -190,6 +191,16 @@ class App {
         this.parseParamsEndpoint(endpoint, endpointPath);
         this.parseBodyEndpoint(endpoint, endpointPath);
       }
+    });
+
+    _.forEach(externalProjects, (project: IExternalProject) => {
+      _.forEach(project.endpoints, (endpoint: IEndpoint) => {
+        const endpointPath = '/' + project.name + endpoint.path;
+        this.register(endpoint, project.name);
+        this.parseEndpointResponse(endpoint, endpointPath);
+        this.parseParamsEndpoint(endpoint, endpointPath);
+        this.parseBodyEndpoint(endpoint, endpointPath);
+      });
     });
 
     // Handle non-mocked routes
@@ -230,6 +241,7 @@ class App {
 
     const bodyArray = bodyValues && bodyValues.length > 0 ? bodyValues : [];
     bodyArray.push(endpoint.request.body);
+
     this.endpointsBody.set(endpointPath, bodyArray);
   }
 
@@ -279,7 +291,6 @@ class App {
           timeout: endpoint.timeout || 0,
           responseBody: body,
         };
-
         this.sendResponse(responseData);
       } else {
         this.handleMissedRoute(req, res);
