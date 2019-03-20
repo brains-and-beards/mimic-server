@@ -39,8 +39,8 @@ class Server {
         };
         this.readAndStart = () => {
             this.readFile(this.configFilePath)
-                .then(json => {
-                const config = this.parseConfig(json);
+                .then(data => {
+                const config = this.parseConfig(data.config);
                 this.restartServer(config);
             })
                 .catch(error => {
@@ -92,7 +92,19 @@ class Server {
     readFile(configPath) {
         return __awaiter(this, void 0, void 0, function* () {
             const data = yield this.readFileAsync(configPath, { encoding: 'utf-8' });
-            return JSON.parse(data);
+            const parsed = JSON.parse(data);
+            const externals = [];
+            if (parsed.externalProjects) {
+                for (const item of parsed.externalProjects) {
+                    const external = yield this.readFileAsync(item.path, { encoding: 'utf-8' });
+                    const parsedExternal = JSON.parse(external);
+                    externals.push(...parsedExternal.projects);
+                }
+                if (parsed && parsed.projects) {
+                    parsed.projects.push(...externals);
+                }
+            }
+            return { config: parsed };
         });
     }
 }
