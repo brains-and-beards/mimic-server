@@ -193,7 +193,6 @@ class App {
       }
     });
 
-
     // Handle non-mocked routes
     this.express.use('/', (req: express.Request, res: any, _next: any) => {
       this.handleMissedRoute(req, res);
