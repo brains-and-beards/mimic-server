@@ -38,14 +38,16 @@ class Server {
     const parsed = JSON.parse(data);
     const externals = [];
 
-    for (const item of parsed.externalProjects) {
-      const external = await this.readFileAsync(item.path, { encoding: 'utf-8' });
-      const parsedExternal = JSON.parse(external);
-      externals.push(...parsedExternal.projects);
-    }
+    if (parsed.externalProjects) {
+      for (const item of parsed.externalProjects) {
+        const external = await this.readFileAsync(item.path, { encoding: 'utf-8' });
+        const parsedExternal = JSON.parse(external);
+        externals.push(...parsedExternal.projects);
+      }
 
-    if (parsed && parsed.projects) {
-      parsed.projects.push(...externals);
+      if (parsed && parsed.projects) {
+        parsed.projects.push(...externals);
+      }
     }
 
     return { config: parsed };
