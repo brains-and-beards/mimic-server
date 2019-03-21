@@ -183,9 +183,9 @@ class App {
     _.forEach(endpoints, (endpoint: IEndpoint) => {
       if (endpoint.enable) {
         const project = projects[endpoint.projectId];
-        const endpointPath = '/' + project.name + endpoint.path;
+        const endpointPath = '/' + project.slug + endpoint.path;
 
-        this.register(endpoint, project.name);
+        this.register(endpoint, project.slug);
         this.parseEndpointResponse(endpoint, endpointPath);
         this.parseParamsEndpoint(endpoint, endpointPath);
         this.parseBodyEndpoint(endpoint, endpointPath);
