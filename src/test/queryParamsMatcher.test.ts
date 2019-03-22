@@ -34,6 +34,7 @@ const testEndpoints = {
 const testProject = {
   uuid: '7088acb0-d616-11e8-b6fb-555fa73c0bbd',
   name: 'nowy',
+  slug: 'nowy',
   endpoints: ['71ac9340-d616-11e8-b6fb-555fa73c0bbd'],
 };
 

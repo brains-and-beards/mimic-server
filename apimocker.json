@@ -5,6 +5,7 @@
     {
       "uuid": "7088acb0-d616-11e8-b6fb-555fa73c0bbd",
       "name": "nowy",
+      "slug": "nowy",
       "endpoints": [
         {
           "uuid": "71ac9340-d616-11e8-b6fb-555fa73c0bbd",
