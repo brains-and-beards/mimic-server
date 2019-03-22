@@ -129,8 +129,8 @@ class App {
         lodash_1.default.forEach(endpoints, (endpoint) => {
             if (endpoint.enable) {
                 const project = projects[endpoint.projectId];
-                const endpointPath = '/' + project.name + endpoint.path;
-                this.register(endpoint, project.name);
+                const endpointPath = '/' + project.slug + endpoint.path;
+                this.register(endpoint, project.slug);
                 this.parseEndpointResponse(endpoint, endpointPath);
                 this.parseParamsEndpoint(endpoint, endpointPath);
                 this.parseBodyEndpoint(endpoint, endpointPath);
