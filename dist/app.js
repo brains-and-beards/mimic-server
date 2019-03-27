@@ -306,7 +306,7 @@ class App {
     }
     handleMissedRoute(apiRequest, response) {
         const projectName = apiRequest.originalUrl.split('/')[1];
-        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.slug === projectName);
         const { endpoints } = this.config.entities;
         const { projects } = this.config.entities;
         const mockedEndpoints = queryParamsMatcher_1.getMockedEndpointForQuery(projects, endpoints, apiRequest);
@@ -327,7 +327,7 @@ class App {
     }
     getForwardingOptions(req) {
         const [, projectName, ...localPath] = req.originalUrl.split('/');
-        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.name === projectName);
+        const project = lodash_1.default.find(this.config.entities.projects, proj => proj.slug === projectName);
         const { urlPrefix } = project;
         const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;
         const host = hostParser_1.parseHost(url);
