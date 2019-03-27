@@ -407,6 +407,23 @@
       "name": "test_no_endpoints",
       "slug": "test_no_endpoints",
       "endpoints": []
+    },
+    {
+      "uuid": "a0ed89c9-b5b9-4ecf-817c-c367b4a4be30",
+      "name": "slug_name_test",
+      "slug": "test-slug",
+      "endpoints": [
+        {
+          "uuid": "bffbfd2f-284f-48ce-8e66-896a503ea8dc",
+          "path": "/test",
+          "method": "GET",
+          "response": "slug test",
+          "request": { "body": {}, "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "enable": true
+        }
+      ]
     }
   ],
   "version": "1.0"
