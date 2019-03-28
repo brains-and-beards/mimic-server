@@ -183,9 +183,9 @@ class App {
     _.forEach(endpoints, (endpoint: IEndpoint) => {
       if (endpoint.enable) {
         const project = projects[endpoint.projectId];
-        const endpointPath = '/' + project.name + endpoint.path;
+        const endpointPath = '/' + project.slug + endpoint.path;
 
-        this.register(endpoint, project.name);
+        this.register(endpoint, project.slug);
         this.parseEndpointResponse(endpoint, endpointPath);
         this.parseParamsEndpoint(endpoint, endpointPath);
         this.parseBodyEndpoint(endpoint, endpointPath);
@@ -388,7 +388,7 @@ class App {
 
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
     const projectName = apiRequest.originalUrl.split('/')[1];
-    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+    const project = _.find(this.config.entities.projects, proj => proj.slug === projectName);
     const { endpoints } = this.config.entities;
     const { projects } = this.config.entities;
 
@@ -409,7 +409,7 @@ class App {
 
   private getForwardingOptions(req: express.Request) {
     const [, projectName, ...localPath] = req.originalUrl.split('/');
-    const project = _.find(this.config.entities.projects, proj => proj.name === projectName);
+    const project = _.find(this.config.entities.projects, proj => proj.slug === projectName);
     const { urlPrefix } = project;
 
     const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;

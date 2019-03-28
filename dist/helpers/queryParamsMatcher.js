@@ -76,7 +76,7 @@ exports.getMockedEndpointForQuery = (projects, endpoints, apiRequest) => {
     const projectName = apiRequest.originalUrl.split('/')[1];
     const requestPath = exports.extractPathForURL(apiRequest.originalUrl);
     const requestMethod = apiRequest.method;
-    const project = lodash_1.default.find(projects, proj => proj.name === projectName);
+    const project = lodash_1.default.find(projects, proj => proj.slug === projectName);
     const projectEndpoints = exports.endpointsInProject(endpoints, project);
     if (!projectEndpoints) {
         return [];

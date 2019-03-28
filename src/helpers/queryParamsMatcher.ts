@@ -86,7 +86,7 @@ export const getMockedEndpointForQuery = (
   const projectName = apiRequest.originalUrl.split('/')[1];
   const requestPath = extractPathForURL(apiRequest.originalUrl);
   const requestMethod = apiRequest.method;
-  const project = _.find(projects, proj => proj.name === projectName);
+  const project = _.find(projects, proj => proj.slug === projectName);
 
   const projectEndpoints = endpointsInProject(endpoints, project);
 
