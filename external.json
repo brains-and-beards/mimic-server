@@ -11,7 +11,7 @@
         {
           "uuid": "7c377eb0-20b2-11e9-9451-df1fb1701014",
           "path": "/test",
-          "method": "GET",
+          "method": "POST",
           "response": "test",
           "request": {
             "body": {
