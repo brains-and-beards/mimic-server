@@ -1,0 +1,44 @@
+{
+  "httpPort": "3000",
+  "httpsPort": "3001",
+  "projects": [
+    {
+      "uuid": "7b85bae0-20b2-11e9-9451-df1fb1701014",
+      "name": "external",
+      "slug": "external",
+      "urlPrefix": "",
+      "endpoints": [
+        {
+          "uuid": "7c377eb0-20b2-11e9-9451-df1fb1701014",
+          "path": "/test",
+          "method": "POST",
+          "response": "test",
+          "request": {
+            "body": {
+
+            },
+            "params": ""
+          },
+          "statusCode": 200,
+          "timeout": 0,
+          "enable": true
+        },
+        {
+          "uuid": "1330dbb4-b967-42c7-8d03-d56e5357e6eb",
+          "path": "/disabled",
+          "method": "GET",
+          "response": "",
+          "request": {
+            "body": {
+
+            },
+            "params": ""
+          },
+          "statusCode": 200,
+          "timeout": 0
+        }
+      ]
+    }
+  ],
+  "version": "1.0"
+}

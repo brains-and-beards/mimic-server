@@ -99,6 +99,7 @@ class App {
 
     this.express = express();
     this.express.use(bodyParser.raw({ type: '*/*' }));
+
     this.mountRoutes();
   }
 
@@ -230,6 +231,7 @@ class App {
 
     const bodyArray = bodyValues && bodyValues.length > 0 ? bodyValues : [];
     bodyArray.push(endpoint.request.body);
+
     this.endpointsBody.set(endpointPath, bodyArray);
   }
 
@@ -279,7 +281,6 @@ class App {
           timeout: endpoint.timeout || 0,
           responseBody: body,
         };
-
         this.sendResponse(responseData);
       } else {
         this.handleMissedRoute(req, res);

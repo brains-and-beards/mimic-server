@@ -35,7 +35,22 @@ class Server {
 
   private async readFile(configPath: string) {
     const data = await this.readFileAsync(configPath, { encoding: 'utf-8' });
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    const externals = [];
+
+    if (parsed.importedConfigurations) {
+      for (const item of parsed.importedConfigurations) {
+        const external = await this.readFileAsync(item.path, { encoding: 'utf-8' });
+        const parsedExternal = JSON.parse(external);
+        externals.push(...parsedExternal.projects);
+      }
+
+      if (parsed && parsed.projects) {
+        parsed.projects.push(...externals);
+      }
+    }
+
+    return parsed;
   }
 
   private watchConfigForChanges = (configPath: string) => {
