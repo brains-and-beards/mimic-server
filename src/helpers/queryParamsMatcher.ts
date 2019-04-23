@@ -99,7 +99,7 @@ export const getMockedEndpointForQuery = (
     if (currentEndpoint.enable) {
       const currentPath = currentEndpoint.path;
       const currentMethod = currentEndpoint.method;
-      // If path, method or body doesn't match go to next endpoint
+      // If path or method don't match go to next endpoint
       if (currentPath !== requestPath || currentMethod !== requestMethod) {
         continue;
       }
