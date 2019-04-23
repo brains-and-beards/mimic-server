@@ -14,9 +14,7 @@
           "method": "POST",
           "response": "test",
           "request": {
-            "body": {
-
-            },
+            "body": {},
             "params": ""
           },
           "statusCode": 200,
@@ -29,13 +27,41 @@
           "method": "GET",
           "response": "",
           "request": {
-            "body": {
-
-            },
+            "body": {},
             "params": ""
           },
           "statusCode": 200,
           "timeout": 0
+        }
+      ]
+    },
+    {
+      "uuid": "7b85bae0-20b2-11e9-9451-epro-test",
+      "name": "ePRO-test",
+      "slug": "ePRO-test",
+      "urlPrefix": "http://staging.clincase.net",
+      "endpoints": [
+        {
+          "uuid": "06b73840-561a-11e9-a319-e190594fceeb",
+          "path": "/test",
+          "method": "GET",
+          "response": "{\"doo\":\"test\"}",
+          "request": { "body": "", "params": "" },
+          "statusCode": 200,
+          "timeout": 0,
+          "enable": true
+        },
+        {
+          "uuid": "9b515ca0-60f7-11e9-8feb-bf224e60db02",
+          "path": "/camepro/device",
+          "method": "POST",
+          "response": {
+            "someField": "unimportant value"
+          },
+          "request": { "params": "?", "body": "[object JSON]" },
+          "statusCode": 200,
+          "timeout": 0,
+          "enable": true
         }
       ]
     }
