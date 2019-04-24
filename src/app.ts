@@ -206,16 +206,12 @@ class App {
   }
 
   private parseEndpointResponse(endpoint: IEndpoint, endpointPath: string) {
-    if (endpoint.request.params) {
-      this.endpointsResponse.set(endpoint.method + endpointPath + endpoint.request.params, endpoint.response);
-    } else if (endpoint.request.body && !_.isEqual(endpoint.request.body, {})) {
-      this.endpointsResponse.set(
-        endpoint.method + endpointPath + JSON.stringify(endpoint.request.body),
-        endpoint.response
-      );
-    } else {
-      this.endpointsResponse.set(endpoint.method + endpointPath, endpoint.response);
-    }
+    let key = endpoint.method + endpointPath;
+
+    if (endpoint.request.params && endpoint.request.params !== '?') key += endpoint.request.params;
+    if (endpoint.request.body && !_.isEqual(endpoint.request.body, {})) key += JSON.stringify(endpoint.request.body);
+
+    this.endpointsResponse.set(key, endpoint.response);
   }
 
   private parseParamsEndpoint(endpoint: IEndpoint, endpointPath: string) {
@@ -341,11 +337,7 @@ class App {
         } else if (_.isEqual(body, JSON.parse(requestBody))) {
           bodyExists = true;
         }
-      } else {
-        if (_.isEqual(body, requestBody)) {
-          bodyExists = true;
-        }
-      }
+      } else if (_.isEqual(body, requestBody)) bodyExists = true;
     });
 
     return bodyExists;
@@ -365,15 +357,17 @@ class App {
   }
 
   private parseQueryToString(obj: any) {
-    return (
-      '?' +
-      Object.keys(obj)
-        .reduce((a: any, k: string) => {
-          a.push(k + '=' + encodeURIComponent(obj[k]));
-          return a;
-        }, [])
-        .join('&')
-    );
+    const keys = Object.keys(obj);
+
+    return keys.length === 0
+      ? ''
+      : '?' +
+          keys
+            .reduce((a: any, k: string) => {
+              a.push(k + '=' + encodeURIComponent(obj[k]));
+              return a;
+            }, [])
+            .join('&');
   }
 
   private sendLogForMockedRequest = () => {

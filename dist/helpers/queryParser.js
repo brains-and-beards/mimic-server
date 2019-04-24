@@ -1,17 +1,1 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseQuery = (queryString) => {
-    if (queryString.length > 0) {
-        const query = {};
-        const pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
-        for (const item of pairs) {
-            const pair = item.split('=');
-            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
-        }
-        return query;
-    }
-    else {
-        return {};
-    }
-};
-//# sourceMappingURL=queryParser.js.map
+"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.parseQuery=(e=>{const t="?"===e[0]?e.substr(1):e;if(t.length>0){const e={},o=t.split("&");for(const t of o){const o=t.split("=");e[decodeURIComponent(o[0])]=decodeURIComponent(o[1]||"")}return e}return{}});
