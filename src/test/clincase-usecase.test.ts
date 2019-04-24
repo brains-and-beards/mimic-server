@@ -1,5 +1,4 @@
 import request from 'supertest-as-promised';
-import { importedConfigPath, contentTypeText } from './config';
 
 describe('Tests for Clincase case', () => {
   it('[POST] - Should return 200 on an auto-mocked POST request', async () => {
