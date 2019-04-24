@@ -7,6 +7,6 @@ describe('Tests for Clincase case', () => {
       .post('/camepro/device')
       .send({})
       .expect(200);
-    expect(res.text).toBe('someField": "unimportant value"');
+    expect(JSON.parse(res.text)).toEqual({ someField: 'unimportant value' });
   });
 });
