@@ -241,7 +241,7 @@ class App {
     throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
   }
 
-  private sendLog(req: express.Request, matched: boolean, type: LogTypes, statusCode: number, respBody?: object): void {
+  private logRequest(req: express.Request, matched: boolean, type: LogTypes, statusCode: number, respBody?: object): void {
     const log = {
       method: req.method,
       path: req.path,
@@ -316,7 +316,7 @@ class App {
     } else {
       responseObject.status(statusCode).send(responseBody);
     }
-    this.sendLog(requestObject, true, LogTypes.REQUEST, response.statusCode);
+    this.logRequest(requestObject, true, LogTypes.REQUEST, response.statusCode);
   }
 
   private isJsonString(str: any) {
@@ -397,7 +397,7 @@ class App {
       }
       sendMockedRequest(apiRequest, response, projectName, firstMocked, this.port);
     } else {
-      this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
+      this.logRequest(apiRequest, false, LogTypes.RESPONSE, 404);
       response.status(404).send(project ? `URL endpoint not found` : `Project "${projectName}" not found`);
     }
   }
@@ -428,9 +428,9 @@ class App {
         this.forwardGzipRequest(options, req);
       } else {
         if (error) {
-          this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
+          this.logRequest(req, false, LogTypes.ERROR, 0, error.toString());
         } else {
-          this.sendLog(
+          this.logRequest(
             req,
             true,
             LogTypes.RESPONSE,
@@ -445,9 +445,9 @@ class App {
   private forwardGzipRequest(options: any, req: express.Request) {
     request({ ...options, gzip: true }, (error: any, response: any, body: any) => {
       if (error) {
-        this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
+        this.logRequest(req, false, LogTypes.ERROR, 0, error.toString());
       } else {
-        this.sendLog(
+        this.logRequest(
           req,
           true,
           LogTypes.RESPONSE,
