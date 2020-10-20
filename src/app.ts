@@ -4,10 +4,10 @@ import bodyParser from 'body-parser';
 import HTTP from 'http';
 import HTTPS from 'https';
 import _ from 'lodash';
-import { socket } from 'zeromq';
 import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
+
 import ErrorHandler from './errors/errorHandler';
 import { parseHost } from './helpers/hostParser';
 import { getMockedEndpointForQuery } from './helpers/queryParamsMatcher';
@@ -75,7 +75,7 @@ class App {
   private endpointsBody = new Map<string, any>();
   private endpointsResponse = new Map<string, any>();
 
-  constructor(errorHandler: ErrorHandler) {
+  constructor(errorHandler: ErrorHandler, useZeroMQ = false) {
     this.setupServer(this.config);
 
     const socketsDir = '/tmp/apimocker_server';
@@ -83,12 +83,17 @@ class App {
 
     this.errorHandler = errorHandler;
 
-    this.socket = socket('pull');
-    this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
-    this.socket.on('message', this.handleUIMessage);
 
-    this.socketLogs = socket('push');
-    this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
+    if (useZeroMQ){
+      const ZeroMQ = require('zeromq')
+      
+      this.socket = ZeroMQ.socket('pull');
+      this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
+      this.socket.on('message', this.handleUIMessage);
+
+      this.socketLogs = ZeroMQ.socket('push');
+      this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
+    }
   }
 
   setupServer(config: IConfig) {
@@ -255,10 +260,10 @@ class App {
   }
 
   private logMessage(logObject: ILog) {
-    const payload = JSON.stringify(logObject)
-    const loggingMethod = this.socketLogs?.send || console.log
+    const payload = JSON.stringify(logObject);
+    const loggingMethod = this.socketLogs ? this.socketLogs.send : console.log;
     
-    return loggingMethod(payload)
+    return loggingMethod(payload);
   }
 
   private register(endpoint: IEndpoint, scope = ''): void {
