@@ -1,6 +1,4 @@
-import express from 'express';
-
-import { constructURL, createBuffer, lengthForBuffer } from '../helpers/mockRequestAssembler';
+import { createBuffer, lengthForBuffer } from '../helpers/mockRequestAssembler';
 
 describe('Tests for Mock Request Assembler', () => {
   it('Test creating Buffer when body is missing', async () => {

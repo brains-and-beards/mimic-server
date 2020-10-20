@@ -37,7 +37,7 @@ describe('Tests for testmocker.json - POST', () => {
     expect(res.text).toBe('response');
   });
   it('[POST] - Should return 404', async () => {
-    const res = await request(projectBasePath).post('/unknown').expect(404);
+    await request(projectBasePath).post('/unknown').expect(404);
   });
   it('[POST - body request] - Should return 200 for empty body', async () => {
     const res = await request(projectBasePath)
@@ -79,7 +79,7 @@ describe('Tests for testmocker.json - POST', () => {
     expect(res.body.valid).toBe(false);
   });
   it('[POST - body request] - Should return 200 with wrong parameters - JSON response', async () => {
-    const res = await request(projectBasePath).post('/object').send({ param: 'value1' }).expect(200);
+    await request(projectBasePath).post('/object').send({ param: 'value1' }).expect(200);
   });
   it('[POST - body request] - Should return 200 with raw response with specific string', async () => {
     const res = await request(projectBasePath)
@@ -90,16 +90,16 @@ describe('Tests for testmocker.json - POST', () => {
     expect(res.text).toBe('response with params');
   });
   it('[POST - body request] - Should return 200 with wrong request body - raw response', async () => {
-    const res = await request(projectBasePath).post('/string').send({ param: 'value1' }).expect(200);
+    await request(projectBasePath).post('/string').send({ param: 'value1' }).expect(200);
   });
   it('[POST - body request] - Should return 404', async () => {
-    const res = await request(projectBasePath).post('/unknown').send({ param: 'value1' }).expect(404);
+    await request(projectBasePath).post('/unknown').send({ param: 'value1' }).expect(404);
   });
   it('[POST - no project value] - Should return 404', async () => {
-    const res = await request(basePathWithoutProjectValue).post('/endpoint').expect(404);
+    await request(basePathWithoutProjectValue).post('/endpoint').expect(404);
   });
   it('[POST - project without endpoints] - Should return 404', async () => {
-    const res = await request(projectWithoutEndpointsBasePath).post('/endpoint').expect(404);
+    await request(projectWithoutEndpointsBasePath).post('/endpoint').expect(404);
   });
 
   it('[POST - body request] - Should return 200 with long JSON response with body JSON request', async () => {
@@ -114,6 +114,6 @@ describe('Tests for testmocker.json - POST', () => {
   });
 
   it('[POST - body request] - Should return 200 with long JSON response with wrong body JSON request', async () => {
-    const res = await request(projectBasePath).post('/longResponse').send({ param: 'value1' }).expect(200);
+    await request(projectBasePath).post('/longResponse').send({ param: 'value1' }).expect(200);
   });
 });

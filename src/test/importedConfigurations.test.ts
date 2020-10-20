@@ -23,9 +23,9 @@ describe('Tests for importing configurations', () => {
     expect(res.text).toBe('test');
   });
   it('[GET] - Should return 404 for not existing imported project', async () => {
-    const res = await request(importedConfigPath).post('/missing').expect(404);
+    await request(importedConfigPath).post('/missing').expect(404);
   });
   it('[GET] - Should return 404 for disabled imported project', async () => {
-    const res = await request(importedConfigPath).get('/disabled').expect(404);
+    await request(importedConfigPath).get('/disabled').expect(404);
   });
 });

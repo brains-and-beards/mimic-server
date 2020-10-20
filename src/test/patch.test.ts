@@ -37,7 +37,7 @@ describe('Tests for testmocker.json - PATCH', () => {
     expect(res.text).toBe('response');
   });
   it('[PATCH] - Should return 404', async () => {
-    const res = await request(projectBasePath).patch('/unknown').expect(404);
+    await request(projectBasePath).patch('/unknown').expect(404);
   });
   it('[PATCH - body request] - Should return 200 for empty body', async () => {
     const res = await request(projectBasePath)
@@ -71,7 +71,7 @@ describe('Tests for testmocker.json - PATCH', () => {
     expect(res.body.valid).toBe(true);
   });
   it('[PATCH - body request] - Should return 200 with wrong parameters when fallback option available  - JSON response', async () => {
-    const res = await request(projectBasePath).patch('/object').send({ param: 'value1' }).expect(200);
+    await request(projectBasePath).patch('/object').send({ param: 'value1' }).expect(200);
   });
   it('[PATCH - body request] - Should return 200 with raw response with specific string', async () => {
     const res = await request(projectBasePath)
@@ -82,15 +82,15 @@ describe('Tests for testmocker.json - PATCH', () => {
     expect(res.text).toBe('response with params');
   });
   it('[PATCH - body request] - Should return 200 with wrong parameters when fallback option available  - raw response', async () => {
-    const res = await request(projectBasePath).patch('/string').send({ param: 'value1' }).expect(200);
+    await request(projectBasePath).patch('/string').send({ param: 'value1' }).expect(200);
   });
   it('[PATCH - body request] - Should return 404', async () => {
-    const res = await request(projectBasePath).patch('/unknown').send({ param: 'value1' }).expect(404);
+    await request(projectBasePath).patch('/unknown').send({ param: 'value1' }).expect(404);
   });
   it('[PATCH - no project value] - Should return 404', async () => {
-    const res = await request(basePathWithoutProjectValue).patch('/endpoint').expect(404);
+    await request(basePathWithoutProjectValue).patch('/endpoint').expect(404);
   });
   it('[PATCH - project without endpoints] - Should return 404', async () => {
-    const res = await request(projectWithoutEndpointsBasePath).patch('/endpoint').expect(404);
+    await request(projectWithoutEndpointsBasePath).patch('/endpoint').expect(404);
   });
 });

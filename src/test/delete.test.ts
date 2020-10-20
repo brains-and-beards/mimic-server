@@ -37,7 +37,7 @@ describe('Tests for testmocker.json - DELETE', () => {
     expect(res.text).toBe('response');
   });
   it('[DELETE] - Should return 404', async () => {
-    const res = await request(projectBasePath).delete('/unknown').expect(404);
+    await request(projectBasePath).delete('/unknown').expect(404);
   });
   it('[DELETE - params] - Should return 200 for empty body', async () => {
     const res = await request(projectBasePath)
@@ -75,7 +75,7 @@ describe('Tests for testmocker.json - DELETE', () => {
     expect(res.body.valid).toBe(false);
   });
   it('[DELETE - params] - Should return 200 with wrong parameters when fallback option available - JSON response', async () => {
-    const res = await request(projectBasePath).delete('/object?parameter=value_is_not_correct').expect(200);
+    await request(projectBasePath).delete('/object?parameter=value_is_not_correct').expect(200);
   });
   it('[DELETE - params] - Should return 200 with raw response with specific string', async () => {
     const res = await request(projectBasePath)
@@ -85,15 +85,15 @@ describe('Tests for testmocker.json - DELETE', () => {
     expect(res.text).toBe('response with params');
   });
   it('[DELETE - params] - Should return 200 with wrong parameters when fallback option available - raw response', async () => {
-    const res = await request(projectBasePath).delete('/string?parameter=value_is_not_correct').expect(200);
+    await request(projectBasePath).delete('/string?parameter=value_is_not_correct').expect(200);
   });
   it('[DELETE - params] - Should return 404', async () => {
-    const res = await request(projectBasePath).delete('/unknown?param=value').expect(404);
+    await request(projectBasePath).delete('/unknown?param=value').expect(404);
   });
   it('[DELETE - no project value] - Should return 404', async () => {
-    const res = await request(basePathWithoutProjectValue).delete('/endpoint').expect(404);
+    await request(basePathWithoutProjectValue).delete('/endpoint').expect(404);
   });
   it('[DELETE - project without endpoints] - Should return 404', async () => {
-    const res = await request(projectWithoutEndpointsBasePath).delete('/endpoint').expect(404);
+    await request(projectWithoutEndpointsBasePath).delete('/endpoint').expect(404);
   });
 });
