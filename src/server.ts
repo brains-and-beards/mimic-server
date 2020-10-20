@@ -1,4 +1,3 @@
-/* tslint:disable:no-console */
 import fs from 'fs';
 import { normalize } from 'normalizr';
 import { promisify } from 'util';
