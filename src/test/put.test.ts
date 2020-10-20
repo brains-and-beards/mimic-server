@@ -1,9 +1,10 @@
 import request from 'supertest-as-promised';
+
 import {
-  projectBasePath,
+  basePathWithoutProjectValue,
   contentTypeJSON,
   contentTypeText,
-  basePathWithoutProjectValue,
+  projectBasePath,
   projectWithoutEndpointsBasePath,
 } from './config';
 
@@ -94,48 +95,28 @@ describe('Tests for testmocker.json - GET', () => {
     expect(res.text).toBe('response with raw request');
   });
   it('[PUT] - Should return 404', async () => {
-    const res = await request(projectBasePath)
-      .put('/unknown')
-      .expect(404);
+    const res = await request(projectBasePath).put('/unknown').expect(404);
   });
   it('[PUT - send JSON] - Should return 200 with wrong request data', async () => {
-    const res = await request(projectBasePath)
-      .put('/object')
-      .send({ data: 'wrong value' })
-      .expect(200);
+    const res = await request(projectBasePath).put('/object').send({ data: 'wrong value' }).expect(200);
   });
   it('[PUT - send raw] - Should return 200 with wrong request data', async () => {
-    const res = await request(projectBasePath)
-      .put('/object')
-      .send('wrong raw text')
-      .expect(200);
+    const res = await request(projectBasePath).put('/object').send('wrong raw text').expect(200);
   });
 
   it('[PUT] - Should return 404', async () => {
-    const res = await request(projectBasePath)
-      .put('/unknown')
-      .expect(404);
+    const res = await request(projectBasePath).put('/unknown').expect(404);
   });
   it('[PUT - send JSON] - Should return 404', async () => {
-    const res = await request(projectBasePath)
-      .put('/unknown')
-      .send({ data: 'wrong value' })
-      .expect(404);
+    const res = await request(projectBasePath).put('/unknown').send({ data: 'wrong value' }).expect(404);
   });
   it('[PUT - send raw] - Should return 404', async () => {
-    const res = await request(projectBasePath)
-      .put('/unknown')
-      .send('wrong raw text')
-      .expect(404);
+    const res = await request(projectBasePath).put('/unknown').send('wrong raw text').expect(404);
   });
   it('[PUT - no project value] - Should return 404', async () => {
-    const res = await request(basePathWithoutProjectValue)
-      .put('/endpoint')
-      .expect(404);
+    const res = await request(basePathWithoutProjectValue).put('/endpoint').expect(404);
   });
   it('[PUT - project without endpoints] - Should return 404', async () => {
-    const res = await request(projectWithoutEndpointsBasePath)
-      .put('/endpoint')
-      .expect(404);
+    const res = await request(projectWithoutEndpointsBasePath).put('/endpoint').expect(404);
   });
 });
