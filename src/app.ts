@@ -37,6 +37,7 @@ interface ILog {
   readonly protocol?: string;
   readonly host?: string;
   readonly port?: number;
+  readonly response?: object;
   readonly statusCode?: number;
   readonly query?: any;
   readonly type: LogTypes;
@@ -109,15 +110,12 @@ class App {
 
   stop = (callback: (error: Error) => void) => {
     const afterStop = (error: Error) => {
-      if (!error) {
-        const logObject: ILog = {
-          type: LogTypes.SERVER,
-          message: 'STOP',
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true,
-        };
-        this.socketLogs.send(JSON.stringify(logObject));
-      }
+      if (!error) this.logMessage({
+        type: LogTypes.SERVER,
+        message: 'STOP',
+        date: moment().format('YYYY/MM/DD HH:mm:ss'),
+        matched: true,
+      })
       callback(error);
     };
 
@@ -127,15 +125,12 @@ class App {
 
   start = (callback: (error: Error) => void) => {
     const afterStart = (error: Error) => {
-      if (!error) {
-        const logObject: ILog = {
-          type: LogTypes.SERVER,
-          message: 'START',
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true,
-        };
-        this.socketLogs.send(JSON.stringify(logObject));
-      }
+      if (!error) this.logMessage({
+        type: LogTypes.SERVER,
+        message: 'START',
+        date: moment().format('YYYY/MM/DD HH:mm:ss'),
+        matched: true,
+      })
       callback(error);
     };
 
@@ -169,13 +164,13 @@ class App {
 
   private handleError = (error: Error) => {
     if (!error) return;
-    const logObject: ILog = {
+    
+    this.logMessage({
       type: LogTypes.SERVER,
       message: `ERROR ${error}`,
       matched: true,
       date: moment().format('YYYY/MM/DD HH:mm:ss'),
-    };
-    this.socketLogs.send(JSON.stringify(logObject));
+    })
   };
 
   private mountRoutes(): void {
@@ -242,7 +237,7 @@ class App {
   }
 
   private logRequest(req: express.Request, matched: boolean, type: LogTypes, statusCode: number, respBody?: object): void {
-    const log = {
+    const log: ILog = {
       method: req.method,
       path: req.path,
       body: req.body,
@@ -256,7 +251,14 @@ class App {
       statusCode,
       response: respBody,
     };
-    this.socketLogs.send(JSON.stringify(log));
+    this.logMessage(log);
+  }
+
+  private logMessage(logObject: ILog) {
+    const payload = JSON.stringify(logObject)
+    const loggingMethod = this.socketLogs?.send || console.log
+    
+    return loggingMethod(payload)
   }
 
   private register(endpoint: IEndpoint, scope = ''): void {
@@ -378,7 +380,7 @@ class App {
       matched: true,
       isWarning: true,
     };
-    this.socketLogs.send(JSON.stringify(logObject));
+    this.logMessage(logObject);
   };
 
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
