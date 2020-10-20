@@ -1,7 +1,7 @@
 import express from 'express';
-import request from 'request';
 import { IncomingHttpHeaders } from 'http';
 import _ from 'lodash';
+import request from 'request';
 
 const kContentLengthKey = 'content-length';
 
@@ -39,7 +39,12 @@ export const lengthForBuffer = (method: string, body?: string) => {
  * @param projectName name of the matching project
  * @returns the new URL which point to our mocked endpoint
  */
-export const constructURL = (apiRequest: express.Request, mockedEndpoint: IEndpoint, port: number, projectName: string) => {
+export const constructURL = (
+  apiRequest: express.Request,
+  mockedEndpoint: IEndpoint,
+  port: number,
+  projectName: string
+) => {
   const protocol = apiRequest.protocol;
   const hostName = apiRequest.hostname;
   const path = mockedEndpoint.path;

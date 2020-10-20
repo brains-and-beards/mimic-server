@@ -1,5 +1,6 @@
-import _ from 'lodash';
 import express from 'express';
+import _ from 'lodash';
+
 import { parseQuery } from './queryParser';
 
 /**
@@ -31,7 +32,7 @@ export const endpointsInProject = (endpoints: Readonly<any>, project: IProject) 
 
   for (const currentKey of keys) {
     // Checking if the endpoint present in the project
-    const endpoint = _.find(project.endpoints, endp => endp === currentKey);
+    const endpoint = _.find(project.endpoints, (endp) => endp === currentKey);
 
     if (endpoint) {
       const currentValue = endpoints[currentKey];
@@ -86,7 +87,7 @@ export const getMockedEndpointForQuery = (
   const projectName = apiRequest.originalUrl.split('/')[1];
   const requestPath = extractPathForURL(apiRequest.originalUrl);
   const requestMethod = apiRequest.method;
-  const project = _.find(projects, proj => proj.slug === projectName);
+  const project = _.find(projects, (proj) => proj.slug === projectName);
 
   const projectEndpoints = endpointsInProject(endpoints, project);
 

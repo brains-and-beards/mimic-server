@@ -1,18 +1,17 @@
-/* tslint:disable:no-console */
-import express from 'express';
 import bodyParser from 'body-parser';
+import express from 'express';
+import fs from 'fs';
 import HTTP from 'http';
 import HTTPS from 'https';
 import _ from 'lodash';
 import moment from 'moment';
-import fs from 'fs';
 import request from 'request';
 
 import ErrorHandler from './errors/errorHandler';
 import { parseHost } from './helpers/hostParser';
+import { sendMockedRequest } from './helpers/mockRequestAssembler';
 import { getMockedEndpointForQuery } from './helpers/queryParamsMatcher';
 import { parseQuery } from './helpers/queryParser';
-import { sendMockedRequest } from './helpers/mockRequestAssembler';
 
 export const enum MessageTypes {
   STOP,
@@ -37,7 +36,7 @@ interface ILog {
   readonly protocol?: string;
   readonly host?: string;
   readonly port?: number;
-  readonly response?: object;
+  readonly response?: any;
   readonly statusCode?: number;
   readonly query?: any;
   readonly type: LogTypes;
@@ -83,10 +82,9 @@ class App {
 
     this.errorHandler = errorHandler;
 
+    if (useZeroMQ) {
+      const ZeroMQ = require('zeromq');
 
-    if (useZeroMQ){
-      const ZeroMQ = require('zeromq')
-      
       this.socket = ZeroMQ.socket('pull');
       this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
       this.socket.on('message', this.handleUIMessage);
@@ -115,12 +113,13 @@ class App {
 
   stop = (callback: (error: Error) => void) => {
     const afterStop = (error: Error) => {
-      if (!error) this.logMessage({
-        type: LogTypes.SERVER,
-        message: 'STOP',
-        date: moment().format('YYYY/MM/DD HH:mm:ss'),
-        matched: true,
-      })
+      if (!error)
+        this.logMessage({
+          type: LogTypes.SERVER,
+          message: 'STOP',
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+          matched: true,
+        });
       callback(error);
     };
 
@@ -130,12 +129,13 @@ class App {
 
   start = (callback: (error: Error) => void) => {
     const afterStart = (error: Error) => {
-      if (!error) this.logMessage({
-        type: LogTypes.SERVER,
-        message: 'START',
-        date: moment().format('YYYY/MM/DD HH:mm:ss'),
-        matched: true,
-      })
+      if (!error)
+        this.logMessage({
+          type: LogTypes.SERVER,
+          message: 'START',
+          date: moment().format('YYYY/MM/DD HH:mm:ss'),
+          matched: true,
+        });
       callback(error);
     };
 
@@ -169,13 +169,13 @@ class App {
 
   private handleError = (error: Error) => {
     if (!error) return;
-    
+
     this.logMessage({
       type: LogTypes.SERVER,
       message: `ERROR ${error}`,
       matched: true,
       date: moment().format('YYYY/MM/DD HH:mm:ss'),
-    })
+    });
   };
 
   private mountRoutes(): void {
@@ -241,7 +241,13 @@ class App {
     throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
   }
 
-  private logRequest(req: express.Request, matched: boolean, type: LogTypes, statusCode: number, respBody?: object): void {
+  private logRequest(
+    req: express.Request,
+    matched: boolean,
+    type: LogTypes,
+    statusCode: number,
+    respBody?: object
+  ): void {
     const log: ILog = {
       method: req.method,
       path: req.path,
@@ -262,7 +268,7 @@ class App {
   private logMessage(logObject: ILog) {
     const payload = JSON.stringify(logObject);
     const loggingMethod = this.socketLogs ? this.socketLogs.send : console.log;
-    
+
     return loggingMethod(payload);
   }
 
@@ -390,7 +396,7 @@ class App {
 
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
     const projectName = apiRequest.originalUrl.split('/')[1];
-    const project = _.find(this.config.entities.projects, proj => proj.slug === projectName);
+    const project = _.find(this.config.entities.projects, (proj) => proj.slug === projectName);
     const { endpoints } = this.config.entities;
     const { projects } = this.config.entities;
 
@@ -411,7 +417,7 @@ class App {
 
   private getForwardingOptions(req: express.Request) {
     const [, projectName, ...localPath] = req.originalUrl.split('/');
-    const project = _.find(this.config.entities.projects, proj => proj.slug === projectName);
+    const project = _.find(this.config.entities.projects, (proj) => proj.slug === projectName);
     const { urlPrefix } = project;
 
     const url = `${urlPrefix}${urlPrefix.endsWith('/') ? '' : '/'}${localPath.join('/')}`;

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import commander from 'commander';
 
-import Server from './server';
 import pkg from '../package.json';
+import Server from './server';
 
 commander
   .version(pkg.version, '-v, --version')
@@ -11,5 +11,6 @@ commander
 
 const { config } = commander;
 
-const server = new Server(config, error => console.error(error), true);
+// eslint-disable-next-line no-console
+const server = new Server(config, (error) => console.error(error), true);
 server.run();

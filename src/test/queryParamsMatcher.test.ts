@@ -1,4 +1,4 @@
-import { extractPathForURL, endpointsInProject, findQueryMatches } from '../helpers/queryParamsMatcher';
+import { endpointsInProject, extractPathForURL, findQueryMatches } from '../helpers/queryParamsMatcher';
 
 const testEndpoints = {
   '71ac9340-d616-11e8-b6fb-555fa73c0bbd': {
