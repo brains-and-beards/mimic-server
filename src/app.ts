@@ -36,7 +36,7 @@ interface ILog {
   readonly protocol?: string;
   readonly host?: string;
   readonly port?: number;
-  readonly response?: object;
+  readonly response?: any;
   readonly statusCode?: number;
   readonly query?: any;
   readonly type: LogTypes;

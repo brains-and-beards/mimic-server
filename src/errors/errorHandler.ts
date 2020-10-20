@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 class ErrorHandler {
   onError: (code?: number) => void;
 

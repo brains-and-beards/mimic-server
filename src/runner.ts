@@ -11,6 +11,6 @@ commander
 
 const { config } = commander;
 
-// eslint-disable-line no-console
+// eslint-disable-next-line no-console
 const server = new Server(config, (error) => console.error(error), true);
 server.run();
