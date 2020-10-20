@@ -1,7 +1,7 @@
 {
-  "name": "apimockerserver",
+  "name": "mimic-server",
   "version": "0.9.2",
-  "description": "APIMocker Server",
+  "description": "Mimic Server",
   "scripts": {
     "start": "cross-env NODE_ENV=dev yarn run serve",
     "start-test": "cross-env NODE_ENV=test yarn run serve",
@@ -27,14 +27,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/brainsandbeards/APIMockerServer.git"
+    "url": "git@github.com:brains-and-beards/mimic-server.git"
   },
   "author": "Brains & Beards",
   "license": "SEE LICENSE IN LICENSE.md",
   "bugs": {
-    "url": "https://gitlab.com/brainsandbeards/APIMockerServer/issues"
+    "url": "https://github.com/brains-and-beards/mimic-server/issues"
   },
-  "homepage": "https://gitlab.com/brainsandbeards/APIMockerServer#README",
+  "homepage": "https://github.com/brains-and-beards/mimic-server",
   "private": true,
   "preferGlobal": true,
   "devDependencies": {

@@ -1,10 +1,10 @@
-# APIMockerServer
+# Mimic Server
 
 ## Install
 
 `yarn install`
 
-## Make the server listen
+## Run server and watch for configuration changes
 
 `yarn watch`
 
