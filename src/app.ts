@@ -4,10 +4,10 @@ import bodyParser from 'body-parser';
 import HTTP from 'http';
 import HTTPS from 'https';
 import _ from 'lodash';
-import { socket } from 'zeromq';
 import moment from 'moment';
 import fs from 'fs';
 import request from 'request';
+
 import ErrorHandler from './errors/errorHandler';
 import { parseHost } from './helpers/hostParser';
 import { getMockedEndpointForQuery } from './helpers/queryParamsMatcher';
@@ -37,6 +37,7 @@ interface ILog {
   readonly protocol?: string;
   readonly host?: string;
   readonly port?: number;
+  readonly response?: object;
   readonly statusCode?: number;
   readonly query?: any;
   readonly type: LogTypes;
@@ -74,7 +75,7 @@ class App {
   private endpointsBody = new Map<string, any>();
   private endpointsResponse = new Map<string, any>();
 
-  constructor(errorHandler: ErrorHandler) {
+  constructor(errorHandler: ErrorHandler, useZeroMQ = false) {
     this.setupServer(this.config);
 
     const socketsDir = '/tmp/apimocker_server';
@@ -82,12 +83,17 @@ class App {
 
     this.errorHandler = errorHandler;
 
-    this.socket = socket('pull');
-    this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
-    this.socket.on('message', this.handleUIMessage);
 
-    this.socketLogs = socket('push');
-    this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
+    if (useZeroMQ){
+      const ZeroMQ = require('zeromq')
+      
+      this.socket = ZeroMQ.socket('pull');
+      this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
+      this.socket.on('message', this.handleUIMessage);
+
+      this.socketLogs = ZeroMQ.socket('push');
+      this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
+    }
   }
 
   setupServer(config: IConfig) {
@@ -109,15 +115,12 @@ class App {
 
   stop = (callback: (error: Error) => void) => {
     const afterStop = (error: Error) => {
-      if (!error) {
-        const logObject: ILog = {
-          type: LogTypes.SERVER,
-          message: 'STOP',
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true,
-        };
-        this.socketLogs.send(JSON.stringify(logObject));
-      }
+      if (!error) this.logMessage({
+        type: LogTypes.SERVER,
+        message: 'STOP',
+        date: moment().format('YYYY/MM/DD HH:mm:ss'),
+        matched: true,
+      })
       callback(error);
     };
 
@@ -127,15 +130,12 @@ class App {
 
   start = (callback: (error: Error) => void) => {
     const afterStart = (error: Error) => {
-      if (!error) {
-        const logObject: ILog = {
-          type: LogTypes.SERVER,
-          message: 'START',
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true,
-        };
-        this.socketLogs.send(JSON.stringify(logObject));
-      }
+      if (!error) this.logMessage({
+        type: LogTypes.SERVER,
+        message: 'START',
+        date: moment().format('YYYY/MM/DD HH:mm:ss'),
+        matched: true,
+      })
       callback(error);
     };
 
@@ -169,13 +169,13 @@ class App {
 
   private handleError = (error: Error) => {
     if (!error) return;
-    const logObject: ILog = {
+    
+    this.logMessage({
       type: LogTypes.SERVER,
       message: `ERROR ${error}`,
       matched: true,
       date: moment().format('YYYY/MM/DD HH:mm:ss'),
-    };
-    this.socketLogs.send(JSON.stringify(logObject));
+    })
   };
 
   private mountRoutes(): void {
@@ -241,8 +241,8 @@ class App {
     throw new Error('[getAppropriateListenerFunction] Unexpected API method to listen for');
   }
 
-  private sendLog(req: express.Request, matched: boolean, type: LogTypes, statusCode: number, respBody?: object): void {
-    const log = {
+  private logRequest(req: express.Request, matched: boolean, type: LogTypes, statusCode: number, respBody?: object): void {
+    const log: ILog = {
       method: req.method,
       path: req.path,
       body: req.body,
@@ -256,7 +256,14 @@ class App {
       statusCode,
       response: respBody,
     };
-    this.socketLogs.send(JSON.stringify(log));
+    this.logMessage(log);
+  }
+
+  private logMessage(logObject: ILog) {
+    const payload = JSON.stringify(logObject);
+    const loggingMethod = this.socketLogs ? this.socketLogs.send : console.log;
+    
+    return loggingMethod(payload);
   }
 
   private register(endpoint: IEndpoint, scope = ''): void {
@@ -316,7 +323,7 @@ class App {
     } else {
       responseObject.status(statusCode).send(responseBody);
     }
-    this.sendLog(requestObject, true, LogTypes.REQUEST, response.statusCode);
+    this.logRequest(requestObject, true, LogTypes.REQUEST, response.statusCode);
   }
 
   private isJsonString(str: any) {
@@ -378,7 +385,7 @@ class App {
       matched: true,
       isWarning: true,
     };
-    this.socketLogs.send(JSON.stringify(logObject));
+    this.logMessage(logObject);
   };
 
   private handleMissedRoute(apiRequest: express.Request, response: express.Response) {
@@ -397,7 +404,7 @@ class App {
       }
       sendMockedRequest(apiRequest, response, projectName, firstMocked, this.port);
     } else {
-      this.sendLog(apiRequest, false, LogTypes.RESPONSE, 404);
+      this.logRequest(apiRequest, false, LogTypes.RESPONSE, 404);
       response.status(404).send(project ? `URL endpoint not found` : `Project "${projectName}" not found`);
     }
   }
@@ -428,9 +435,9 @@ class App {
         this.forwardGzipRequest(options, req);
       } else {
         if (error) {
-          this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
+          this.logRequest(req, false, LogTypes.ERROR, 0, error.toString());
         } else {
-          this.sendLog(
+          this.logRequest(
             req,
             true,
             LogTypes.RESPONSE,
@@ -445,9 +452,9 @@ class App {
   private forwardGzipRequest(options: any, req: express.Request) {
     request({ ...options, gzip: true }, (error: any, response: any, body: any) => {
       if (error) {
-        this.sendLog(req, false, LogTypes.ERROR, 0, error.toString());
+        this.logRequest(req, false, LogTypes.ERROR, 0, error.toString());
       } else {
-        this.sendLog(
+        this.logRequest(
           req,
           true,
           LogTypes.RESPONSE,
