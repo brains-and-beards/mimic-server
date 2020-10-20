@@ -11,5 +11,5 @@ commander
 
 const { config } = commander;
 
-const server = new Server(config);
+const server = new Server(config, error => console.error(error), true);
 server.run();

@@ -13,9 +13,9 @@ class Server {
   app: App;
   errorHandler: ErrorHandler;
 
-  constructor(filename: string, handleErrors?: (code?: number) => void) {
+  constructor(filename: string, handleErrors?: (code?: number) => void, useZeroMQ = false) {
     this.errorHandler = new ErrorHandler(handleErrors);
-    this.app = new App(this.errorHandler);
+    this.app = new App(this.errorHandler, useZeroMQ);
 
     if (!filename) {
       process.env.NODE_ENV === 'test'
