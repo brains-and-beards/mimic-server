@@ -3,8 +3,8 @@ import { normalize } from 'normalizr';
 import { promisify } from 'util';
 
 import App from './app';
-import { ConfigSchema } from './Models/DataSchema';
 import ErrorHandler from './errors/errorHandler';
+import { ConfigSchema } from './Models/DataSchema';
 
 class Server {
   readFileAsync = promisify(fs.readFile);
@@ -18,9 +18,7 @@ class Server {
     this.app = new App(this.errorHandler, runningInTest ? false : useZeroMQ);
 
     if (!filename) {
-      runningInTest
-        ? (this.configFilePath = './testmocker.json')
-        : (this.configFilePath = './apimocker.json');
+      runningInTest ? (this.configFilePath = './testmocker.json') : (this.configFilePath = './apimocker.json');
     } else {
       this.configFilePath = filename;
     }
@@ -68,11 +66,11 @@ class Server {
 
   private readAndStart = () => {
     this.readFile(this.configFilePath)
-      .then(json => {
+      .then((json) => {
         const config = this.parseConfig(json);
         this.restartServer(config);
       })
-      .catch(error => {
+      .catch((error) => {
         this.errorHandler.checkErrorAndStopProcess(error);
         this.stopServer();
       });
@@ -80,7 +78,7 @@ class Server {
 
   private stopServer = (callback?: () => any) => {
     if (this.app)
-      this.app.stop(error => {
+      this.app.stop((error) => {
         if (error) {
           console.error(error);
         } else {
@@ -100,7 +98,7 @@ class Server {
   private _startServer = (config: IConfig) => {
     this.app.setupServer(config);
 
-    this.app.start(error => {
+    this.app.start((error) => {
       if (error) {
         return console.error(error);
       }

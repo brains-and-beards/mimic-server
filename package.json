@@ -14,7 +14,7 @@
     "watch-test": "yarn run test -- --watchAll",
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "debug": "yarn run build && yarn run watch-debug",
     "serve-debug": "nodemon --inspect dist/runner.js",
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\"",

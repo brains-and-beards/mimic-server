@@ -21,13 +21,13 @@ module.exports = {
     'prettier/prettier': [
       'error',
       {
-        "printWidth": 120,
-        "singleQuote": true,
-        "trailingComma": "es5",
-        "tabWidth": 2,
-        "useTabs": false,
-        "bracketSpacing": true,
-        "semi": true
+        printWidth: 120,
+        singleQuote: true,
+        trailingComma: 'es5',
+        tabWidth: 2,
+        useTabs: false,
+        bracketSpacing: true,
+        semi: true,
       },
     ],
     'simple-import-sort/sort': 'error',
