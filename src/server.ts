@@ -14,11 +14,12 @@ class Server {
   errorHandler: ErrorHandler;
 
   constructor(filename: string, handleErrors?: (code?: number) => void, useZeroMQ = false) {
+    const runningInTest = process.env.NODE_ENV === 'test';
     this.errorHandler = new ErrorHandler(handleErrors);
-    this.app = new App(this.errorHandler, useZeroMQ);
+    this.app = new App(this.errorHandler, runningInTest ? false : useZeroMQ);
 
     if (!filename) {
-      process.env.NODE_ENV === 'test'
+      runningInTest
         ? (this.configFilePath = './testmocker.json')
         : (this.configFilePath = './apimocker.json');
     } else {
