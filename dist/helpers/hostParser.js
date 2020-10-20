@@ -1,1 +1,1 @@
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0});const extractHostname=t=>{let e;return e=(e=(e=t.indexOf("//")>-1?t.split("/")[2]:t.split("/")[0]).split(":")[0]).split("?")[0]};exports.parseHost=(t=>extractHostname(t));
+"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.parseHost=void 0;const extractHostname=t=>{let e;return e=(e=(e=t.indexOf("//")>-1?t.split("/")[2]:t.split("/")[0]).split(":")[0]).split("?")[0]};exports.parseHost=(t=>extractHostname(t));
