@@ -10,7 +10,7 @@
     "serve": "node dist/runner.js",
     "watch-node": "nodemon dist/runner.js",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
-    "test": "jest",
+    "test": "jest --runInBand --forceExit",
     "watch-test": "yarn run test -- --watchAll",
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
@@ -59,12 +59,12 @@
     "gulp": "^3.9.1",
     "gulp-typescript": "^5.0.0-alpha.3",
     "gulp-uglify-es": "^1.0.4",
-    "jest": "23.6.0",
+    "jest": "^26.6.0",
     "nodemon": "^1.18.2",
     "prettier": "^2.1.2",
     "supertest": "2.0.1",
     "supertest-as-promised": "^4.0.2",
-    "ts-jest": "^23.10.4",
+    "ts-jest": "^26.4.1",
     "ts-node": "^7.0.0",
     "typescript": "^4.0.3"
   },
@@ -97,6 +97,9 @@
     },
     "modulePaths": [
       "<rootDir>"
+    ],
+    "setupFiles": [
+      "./src/test/utils/setup.ts"
     ]
   }
 }
