@@ -113,30 +113,18 @@ class App {
 
   stop = (callback: (error: Error) => void) => {
     const afterStop = (error: Error) => {
-      if (!error)
-        this.logMessage({
-          type: LogTypes.SERVER,
-          message: 'STOP',
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true,
-        });
+      if (!error) this.logServerClose();
       callback(error);
     };
 
     if (this.httpServer) this.httpServer.close(afterStop);
-    if (this.sslServer) this.sslServer.close(afterStop);
+    // Currently we don't fully support (nor need) SSL, so we only stop one server
+    // if (this.sslServer) this.sslServer.close(afterStop);
   };
 
   start = (callback: (error: Error) => void) => {
     const afterStart = (error: Error) => {
-      if (!error)
-        this.logMessage({
-          type: LogTypes.SERVER,
-          message: 'START',
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true,
-        });
-      callback(error);
+      if (!error) callback(error);
     };
 
     this.httpServer = HTTP.createServer(this.express);
@@ -153,6 +141,15 @@ class App {
       // TODO: We should get proper Android support before we launch SSL support
       // this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
     }
+  };
+
+  private logServerClose = () => {
+    this.logMessage({
+      type: LogTypes.SERVER,
+      message: 'START',
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
+      matched: true,
+    });
   };
 
   private handleUIMessage = (message: Uint8Array) => {

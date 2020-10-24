@@ -26,10 +26,24 @@ class Server {
     console.log('Reading config file from: ' + this.configFilePath);
   }
 
-  run = () => {
-    console.log('Starting run');
+  run = async () => {
     this.watchConfigForChanges(this.configFilePath);
-    this.readAndStart();
+    await this.readAndStart();
+  };
+
+  stopServer = (callback?: () => any) => {
+    if (this.app) {
+      return this.app.stop((error) => {
+        if (error) {
+          console.error(error);
+        } else {
+          if (callback) callback();
+        }
+      });
+    } else {
+      // return Promise.resolve(true);
+      throw '[server] No server to stop, weird!';
+    }
   };
 
   private async readFile(configPath: string) {
@@ -66,7 +80,7 @@ class Server {
   };
 
   private readAndStart = () => {
-    this.readFile(this.configFilePath)
+    return this.readFile(this.configFilePath)
       .then((json) => {
         const config = this.parseConfig(json);
         this.restartServer(config);
@@ -74,17 +88,6 @@ class Server {
       .catch((error) => {
         this.errorHandler.checkErrorAndStopProcess(error);
         this.stopServer();
-      });
-  };
-
-  private stopServer = (callback?: () => any) => {
-    if (this.app)
-      this.app.stop((error) => {
-        if (error) {
-          console.error(error);
-        } else {
-          if (callback) callback();
-        }
       });
   };
 
