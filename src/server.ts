@@ -26,10 +26,41 @@ class Server {
     console.log('Reading config file from: ' + this.configFilePath);
   }
 
-  run = () => {
-    console.log('Starting run');
+  run = async () => {
     this.watchConfigForChanges(this.configFilePath);
-    this.readAndStart();
+    await this.readAndStart();
+  };
+
+  stopServer = (callback?: () => any) => {
+    if (this.app) {
+      return this.app.stop((error) => {
+        if (error) {
+          console.error(error);
+        } else {
+          if (callback) callback();
+        }
+      });
+    } else {
+      // eslint-disable-next-line no-console
+      console.error('[server] No server to stop, weird!');
+      return Promise.resolve(true);
+    }
+  };
+
+  stopServerSync = (callback?: () => any) => {
+    if (this.app) {
+      return this.app.stopSync((error) => {
+        if (error) {
+          console.error(error);
+        } else {
+          if (callback) callback();
+        }
+      });
+    } else {
+      // eslint-disable-next-line no-console
+      console.error('[server] No server to stop, weird!');
+      return Promise.resolve(true);
+    }
   };
 
   private async readFile(configPath: string) {
@@ -66,7 +97,7 @@ class Server {
   };
 
   private readAndStart = () => {
-    this.readFile(this.configFilePath)
+    return this.readFile(this.configFilePath)
       .then((json) => {
         const config = this.parseConfig(json);
         this.restartServer(config);
@@ -74,17 +105,6 @@ class Server {
       .catch((error) => {
         this.errorHandler.checkErrorAndStopProcess(error);
         this.stopServer();
-      });
-  };
-
-  private stopServer = (callback?: () => any) => {
-    if (this.app)
-      this.app.stop((error) => {
-        if (error) {
-          console.error(error);
-        } else {
-          if (callback) callback();
-        }
       });
   };
 

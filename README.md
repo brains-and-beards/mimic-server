@@ -23,5 +23,4 @@ Running an HTTPS server requires a UNIX-compatible system with
 
 ## Tests
 
-- Run server by command `yarn start-test`
-- Run tests yarn test
+You can run all the project's unit test suites with `yarn test`.

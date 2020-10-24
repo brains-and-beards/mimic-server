@@ -1,5 +1,6 @@
 import request from 'supertest-as-promised';
 
+import Server from '../server';
 import {
   basePathWithoutProjectValue,
   contentTypeJSON,
@@ -7,8 +8,19 @@ import {
   projectBasePath,
   projectWithoutEndpointsBasePath,
 } from './config';
+import { startMimicServer } from './utils/helpers';
 
 describe('Tests for testmocker.json - DELETE', () => {
+  let server: Server | undefined;
+
+  beforeAll(async () => {
+    server = await startMimicServer();
+  });
+
+  afterAll(async () => {
+    await server!.stopServerSync();
+  });
+
   it('[DELETE] - Should return 200 for empty body', async () => {
     const res = await request(projectBasePath).delete('/empty').expect(200).expect('Content-Type', contentTypeJSON);
     expect(typeof res.body).toBe('object');

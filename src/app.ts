@@ -113,30 +113,49 @@ class App {
 
   stop = (callback: (error: Error) => void) => {
     const afterStop = (error: Error) => {
-      if (!error)
-        this.logMessage({
-          type: LogTypes.SERVER,
-          message: 'STOP',
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true,
-        });
+      if (!error) this.logServerClose();
       callback(error);
     };
 
     if (this.httpServer) this.httpServer.close(afterStop);
-    if (this.sslServer) this.sslServer.close(afterStop);
+    // Currently we don't fully support (nor need) SSL, so we only stop one server
+    // if (this.sslServer) this.sslServer.close(afterStop);
+  };
+
+  // Like stop, but make a loop where we sleep 500ms and check whether the server emitted the 'close' event to be sure it's finished.
+  // Then we resolve the promise and hand back the control
+  stopSync = async (callback: (error: Error) => void) => {
+    const afterStop = (error: Error) => {
+      if (!error) this.logServerClose();
+      callback(error);
+    };
+
+    if (this.httpServer) {
+      let isServerClosed = false;
+
+      this.httpServer.once('close', () => {
+        isServerClosed = true;
+      });
+
+      this.httpServer.close(afterStop);
+
+      while (!isServerClosed) {
+        await sleep(500);
+      }
+      return true;
+    } else {
+      // eslint-disable-next-line no-console
+      console.error('[app > stop-sync] No server to stop, weird!');
+      return Promise.resolve(true);
+    }
+
+    // Currently we don't fully support (nor need) SSL, so we only stop one server
+    // if (this.sslServer) this.sslServer.close(afterStop);
   };
 
   start = (callback: (error: Error) => void) => {
     const afterStart = (error: Error) => {
-      if (!error)
-        this.logMessage({
-          type: LogTypes.SERVER,
-          message: 'START',
-          date: moment().format('YYYY/MM/DD HH:mm:ss'),
-          matched: true,
-        });
-      callback(error);
+      if (!error) callback(error);
     };
 
     this.httpServer = HTTP.createServer(this.express);
@@ -144,15 +163,24 @@ class App {
       this.errorHandler.checkErrorAndStopProcess(error);
     });
 
-    if (fs.existsSync('./localhost.key') && fs.existsSync('./localhost.crt')) {
-      const sslOptions = {
-        key: fs.readFileSync('./localhost.key'),
-        cert: fs.readFileSync('./localhost.crt'),
-      };
+    // if (fs.existsSync('./localhost.key') && fs.existsSync('./localhost.crt')) {
+    // const sslOptions = {
+    //   key: fs.readFileSync('./localhost.key'),
+    //   cert: fs.readFileSync('./localhost.crt'),
+    // };
 
-      // TODO: We should get proper Android support before we launch SSL support
-      // this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
-    }
+    // TODO: We should get proper Android support before we launch SSL support
+    // this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
+    // }
+  };
+
+  private logServerClose = () => {
+    this.logMessage({
+      type: LogTypes.SERVER,
+      message: 'START',
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
+      matched: true,
+    });
   };
 
   private handleUIMessage = (message: Uint8Array) => {
@@ -470,6 +498,11 @@ class App {
       }
     });
   }
+}
+
+function sleep(miliseconds: number) {
+  const sleepPromise = new Promise((resolve, _reject) => setTimeout(() => resolve(), miliseconds));
+  return sleepPromise;
 }
 
 export default App;
