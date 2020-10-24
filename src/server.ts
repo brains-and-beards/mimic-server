@@ -41,8 +41,25 @@ class Server {
         }
       });
     } else {
-      // return Promise.resolve(true);
-      throw '[server] No server to stop, weird!';
+      // eslint-disable-next-line no-console
+      console.error('[server] No server to stop, weird!');
+      return Promise.resolve(true);
+    }
+  };
+
+  stopServerSync = (callback?: () => any) => {
+    if (this.app) {
+      return this.app.stopSync((error) => {
+        if (error) {
+          console.error(error);
+        } else {
+          if (callback) callback();
+        }
+      });
+    } else {
+      // eslint-disable-next-line no-console
+      console.error('[server] No server to stop, weird!');
+      return Promise.resolve(true);
     }
   };
 
