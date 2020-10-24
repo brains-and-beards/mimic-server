@@ -4,7 +4,6 @@
   "description": "Mimic Server",
   "scripts": {
     "start": "cross-env NODE_ENV=dev yarn run serve",
-    "start-test": "cross-env NODE_ENV=test yarn run serve",
     "stop": "killall node",
     "build": "yarn gulp compile",
     "serve": "node dist/runner.js",
