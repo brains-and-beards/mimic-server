@@ -41,6 +41,9 @@ export interface ILog {
   readonly isWarning?: boolean;
 }
 
+// We need a global router object to be able to dynamically switch config
+let router: express.Router;
+
 class App {
   // @ts-ignore
   private port: number;
@@ -88,8 +91,10 @@ class App {
     this.express = express();
     this.express.use(bodyParser.raw({ type: '*/*' }));
 
-    const router = new Router({ config: this.config, loggingFunction: this.logMessage, port: this.port });
-    this.express.use(router.getExpressRouter());
+    router = new Router({ config, loggingFunction: this.logMessage, port: this.port }).getExpressRouter();
+    this.express.use(function replaceableRouter(req, res, next) {
+      router(req, res, next);
+    });
   }
 
   isListening = (): boolean => {
@@ -157,6 +162,10 @@ class App {
     // TODO: We should get proper Android support before we launch SSL support
     // this.sslServer = HTTPS.createServer(sslOptions, this.express).listen(this.sslPort, afterStart);
     // }
+  };
+
+  switchConfig = (config: IConfig): void => {
+    router = new Router({ config, loggingFunction: this.logMessage, port: this.port }).getExpressRouter();
   };
 
   private logServerClose = () => {
