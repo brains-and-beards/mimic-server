@@ -1,7 +1,7 @@
 import request from 'supertest-as-promised';
 
 import Server from '../server';
-import { contentTypeText, importedConfigPath } from './config';
+import { contentTypeText, importedConfigPath } from './utils/config';
 import { startMimicServer } from './utils/helpers';
 
 describe('Tests for importing configurations', () => {
