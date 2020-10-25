@@ -7,7 +7,7 @@ import {
   contentTypeText,
   projectBasePath,
   projectWithoutEndpointsBasePath,
-} from './config';
+} from './utils/config';
 import { startMimicServer } from './utils/helpers';
 
 describe('Tests for testmocker.json - PATCH', () => {

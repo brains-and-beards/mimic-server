@@ -63,6 +63,10 @@ class Server {
     }
   };
 
+  switchConfig = (config: IConfig): void => {
+    this.app.switchConfig(this.parseConfig(config));
+  };
+
   private async readFile(configPath: string) {
     const data = await this.readFileAsync(configPath, { encoding: 'utf-8' });
     const parsed = JSON.parse(data);

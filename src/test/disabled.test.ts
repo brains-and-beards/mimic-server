@@ -1,7 +1,7 @@
 import request from 'supertest-as-promised';
 
 import Server from '../server';
-import { projectBasePath } from './config';
+import { projectBasePath } from './utils/config';
 import { startMimicServer } from './utils/helpers';
 
 describe('Tests for testmocker.json - Disabled', () => {
