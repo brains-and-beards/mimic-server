@@ -1,1 +1,19 @@
-"use strict";Object.defineProperty(exports,"__esModule",{value:!0}),exports.parseQuery=void 0,exports.parseQuery=(e=>{const t="?"===e[0]?e.substr(1):e;if(t.length>0){const e={},o=t.split("&");for(const t of o){const o=t.split("=");e[decodeURIComponent(o[0])]=decodeURIComponent(o[1]||"")}return e}return{}});
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.parseQuery = void 0;
+exports.parseQuery = (queryString) => {
+    const massagedQueryString = queryString[0] === '?' ? queryString.substr(1) : queryString;
+    if (massagedQueryString.length > 0) {
+        const query = {};
+        const pairs = massagedQueryString.split('&');
+        for (const item of pairs) {
+            const pair = item.split('=');
+            query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        }
+        return query;
+    }
+    else {
+        return {};
+    }
+};
+//# sourceMappingURL=queryParser.js.map
