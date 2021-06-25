@@ -1,6 +1,6 @@
 {
   "name": "mimic-server",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Mimic Server",
   "scripts": {
     "start": "cross-env NODE_ENV=dev yarn run serve",
