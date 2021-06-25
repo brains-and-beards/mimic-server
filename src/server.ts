@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
-import fs from "fs";
-import { normalize } from "normalizr";
-import { promisify } from "util";
+import fs from 'fs';
+import { normalize } from 'normalizr';
+import { promisify } from 'util';
 
-import App from "./app";
-import ErrorHandler from "./errors/errorHandler";
-import { ConfigSchema } from "./Models/DataSchema";
+import App from './app';
+import ErrorHandler from './errors/errorHandler';
+import { ConfigSchema } from './Models/DataSchema';
 
 class Server {
   readFileAsync = promisify(fs.readFile);
@@ -13,23 +13,17 @@ class Server {
   app: App;
   errorHandler: ErrorHandler;
 
-  constructor(
-    filename: string,
-    handleErrors?: (code?: number) => void,
-    useZeroMQ = false
-  ) {
-    const runningInTest = process.env.NODE_ENV === "test";
+  constructor(filename: string, handleErrors?: (code?: number) => void, useZeroMQ = false) {
+    const runningInTest = process.env.NODE_ENV === 'test';
     this.errorHandler = new ErrorHandler(handleErrors);
     this.app = new App(this.errorHandler, runningInTest ? false : useZeroMQ);
 
     if (!filename) {
-      runningInTest
-        ? (this.configFilePath = "./testmocker.json")
-        : (this.configFilePath = "./apimocker.json");
+      runningInTest ? (this.configFilePath = './testmocker.json') : (this.configFilePath = './apimocker.json');
     } else {
       this.configFilePath = filename;
     }
-    console.log("Reading config file from: " + this.configFilePath);
+    console.log('Reading config file from: ' + this.configFilePath);
   }
 
   run = async () => {
@@ -49,7 +43,7 @@ class Server {
       });
     } else {
       // eslint-disable-next-line no-console
-      console.error("[server] No server to stop, weird!");
+      console.error('[server] No server to stop, weird!');
       return Promise.resolve(true);
     }
   };
@@ -66,7 +60,7 @@ class Server {
       });
     } else {
       // eslint-disable-next-line no-console
-      console.error("[server] No server to stop, weird!");
+      console.error('[server] No server to stop, weird!');
       return Promise.resolve(true);
     }
   };
@@ -76,15 +70,13 @@ class Server {
   };
 
   private async readFile(configPath: string) {
-    const data = await this.readFileAsync(configPath, { encoding: "utf-8" });
+    const data = await this.readFileAsync(configPath, { encoding: 'utf-8' });
     const parsed = JSON.parse(data);
     const externals = [];
 
     if (parsed.importedConfigurations) {
       for (const item of parsed.importedConfigurations) {
-        const external = await this.readFileAsync(item.path, {
-          encoding: "utf-8",
-        });
+        const external = await this.readFileAsync(item.path, { encoding: 'utf-8' });
         const parsedExternal = JSON.parse(external);
         externals.push(...parsedExternal.projects);
       }
@@ -99,8 +91,8 @@ class Server {
 
   private watchConfigForChanges = (configPath: string) => {
     fs.watchFile(configPath, () => {
-      console.log("-----------------------------------------");
-      console.log(configPath + " changed");
+      console.log('-----------------------------------------');
+      console.log(configPath + ' changed');
       this.readAndStart();
     });
   };
@@ -114,7 +106,7 @@ class Server {
     return normalizedData as IConfig;
   };
 
-  private readAndStart = () => {
+  private readAndStart = async() => {
     return this.readFile(this.configFilePath)
       .then((json) => {
         const config = this.parseConfig(json);

@@ -50,7 +50,7 @@ class App {
             };
             if (this.httpServer) {
                 let isServerClosed = false;
-                this.httpServer.once("close", () => {
+                this.httpServer.once('close', () => {
                     isServerClosed = true;
                 });
                 this.httpServer.close(afterStop);
@@ -61,7 +61,7 @@ class App {
             }
             else {
                 // eslint-disable-next-line no-console
-                console.error("[app > stop-sync] No server to stop, weird!");
+                console.error('[app > stop-sync] No server to stop, weird!');
                 return Promise.resolve(true);
             }
             // Currently we don't fully support (nor need) SSL, so we only stop one server
@@ -73,7 +73,7 @@ class App {
                     callback(error);
             };
             this.httpServer = http_1.default.createServer(this.express);
-            this.httpServer.listen(this.port, afterStart).on("error", (error) => {
+            this.httpServer.listen(this.port, afterStart).on('error', (error) => {
                 this.errorHandler.checkErrorAndStopProcess(error);
             });
             // if (fs.existsSync('./localhost.key') && fs.existsSync('./localhost.crt')) {
@@ -86,17 +86,13 @@ class App {
             // }
         };
         this.switchConfig = (config) => {
-            router = new router_1.default({
-                config,
-                loggingFunction: this.logMessage,
-                port: this.port,
-            }).getExpressRouter();
+            router = new router_1.default({ config, loggingFunction: this.logMessage, port: this.port }).getExpressRouter();
         };
         this.logServerClose = () => {
             this.logMessage({
                 type: 0 /* SERVER */,
-                message: "START",
-                date: moment_1.default().format("YYYY/MM/DD HH:mm:ss"),
+                message: 'START',
+                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
                 matched: true,
             });
         };
@@ -117,20 +113,20 @@ class App {
                 type: 0 /* SERVER */,
                 message: `ERROR ${error}`,
                 matched: true,
-                date: moment_1.default().format("YYYY/MM/DD HH:mm:ss"),
+                date: moment_1.default().format('YYYY/MM/DD HH:mm:ss'),
             });
         };
         this.setupServer(this.config);
-        const socketsDir = "/tmp/apimocker_server";
+        const socketsDir = '/tmp/apimocker_server';
         if (!fs_1.default.existsSync(socketsDir))
             fs_1.default.mkdirSync(socketsDir);
         this.errorHandler = errorHandler;
         if (useZeroMQ) {
-            const ZeroMQ = require("zeromq");
-            this.socket = ZeroMQ.socket("pull");
+            const ZeroMQ = require('zeromq');
+            this.socket = ZeroMQ.socket('pull');
             this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
-            this.socket.on("message", this.handleUIMessage);
-            this.socketLogs = ZeroMQ.socket("push");
+            this.socket.on('message', this.handleUIMessage);
+            this.socketLogs = ZeroMQ.socket('push');
             this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
         }
     }
@@ -140,12 +136,8 @@ class App {
         this.port = httpPort || 3000;
         this.sslPort = httpsPort || 3001;
         this.express = express_1.default();
-        this.express.use(body_parser_1.default.raw({ type: "*/*" }));
-        router = new router_1.default({
-            config,
-            loggingFunction: this.logMessage,
-            port: this.port,
-        }).getExpressRouter();
+        this.express.use(body_parser_1.default.raw({ type: '*/*' }));
+        router = new router_1.default({ config, loggingFunction: this.logMessage, port: this.port }).getExpressRouter();
         this.express.use(function replaceableRouter(req, res, next) {
             router(req, res, next);
         });

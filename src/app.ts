@@ -1,12 +1,12 @@
-import bodyParser from "body-parser";
-import express from "express";
-import fs from "fs";
-import HTTP from "http";
-import HTTPS from "https";
-import moment from "moment";
+import bodyParser from 'body-parser';
+import express from 'express';
+import fs from 'fs';
+import HTTP from 'http';
+import HTTPS from 'https';
+import moment from 'moment';
 
-import ErrorHandler from "./errors/errorHandler";
-import Router from "./router";
+import ErrorHandler from './errors/errorHandler';
+import Router from './router';
 
 export const enum MessageTypes {
   STOP,
@@ -64,19 +64,19 @@ class App {
   constructor(errorHandler: ErrorHandler, useZeroMQ = false) {
     this.setupServer(this.config);
 
-    const socketsDir = "/tmp/apimocker_server";
+    const socketsDir = '/tmp/apimocker_server';
     if (!fs.existsSync(socketsDir)) fs.mkdirSync(socketsDir);
 
     this.errorHandler = errorHandler;
 
     if (useZeroMQ) {
-      const ZeroMQ = require("zeromq");
+      const ZeroMQ = require('zeromq');
 
-      this.socket = ZeroMQ.socket("pull");
+      this.socket = ZeroMQ.socket('pull');
       this.socket.connect(`ipc://${socketsDir}/commands.ipc`);
-      this.socket.on("message", this.handleUIMessage);
+      this.socket.on('message', this.handleUIMessage);
 
-      this.socketLogs = ZeroMQ.socket("push");
+      this.socketLogs = ZeroMQ.socket('push');
       this.socketLogs.bindSync(`ipc://${socketsDir}/logs.ipc`);
     }
   }
@@ -89,13 +89,9 @@ class App {
     this.sslPort = httpsPort || 3001;
 
     this.express = express();
-    this.express.use(bodyParser.raw({ type: "*/*" }));
+    this.express.use(bodyParser.raw({ type: '*/*' }));
 
-    router = new Router({
-      config,
-      loggingFunction: this.logMessage,
-      port: this.port,
-    }).getExpressRouter();
+    router = new Router({ config, loggingFunction: this.logMessage, port: this.port }).getExpressRouter();
     this.express.use(function replaceableRouter(req, res, next) {
       router(req, res, next);
     });
@@ -105,8 +101,8 @@ class App {
     return this.httpServer ? this.httpServer.listening : false;
   };
 
-  stop = (callback: (error?: Error) => void) => {
-    const afterStop = (error?: Error) => {
+  stop = (callback: (error: Error) => void) => {
+    const afterStop = (error: Error) => {
       if (!error) this.logServerClose();
       callback(error);
     };
@@ -118,8 +114,8 @@ class App {
 
   // Like stop, but make a loop where we sleep 500ms and check whether the server emitted the 'close' event to be sure it's finished.
   // Then we resolve the promise and hand back the control
-  stopSync = async (callback: (error?: Error) => void) => {
-    const afterStop = (error?: Error) => {
+  stopSync = async (callback: (error: Error) => void) => {
+    const afterStop = (error: Error) => {
       if (!error) this.logServerClose();
       callback(error);
     };
@@ -127,7 +123,7 @@ class App {
     if (this.httpServer) {
       let isServerClosed = false;
 
-      this.httpServer.once("close", () => {
+      this.httpServer.once('close', () => {
         isServerClosed = true;
       });
 
@@ -139,7 +135,7 @@ class App {
       return true;
     } else {
       // eslint-disable-next-line no-console
-      console.error("[app > stop-sync] No server to stop, weird!");
+      console.error('[app > stop-sync] No server to stop, weird!');
       return Promise.resolve(true);
     }
 
@@ -153,7 +149,7 @@ class App {
     };
 
     this.httpServer = HTTP.createServer(this.express);
-    this.httpServer.listen(this.port, afterStart).on("error", (error: any) => {
+    this.httpServer.listen(this.port, afterStart).on('error', (error: any) => {
       this.errorHandler.checkErrorAndStopProcess(error);
     });
 
@@ -169,18 +165,14 @@ class App {
   };
 
   switchConfig = (config: IConfig): void => {
-    router = new Router({
-      config,
-      loggingFunction: this.logMessage,
-      port: this.port,
-    }).getExpressRouter();
+    router = new Router({ config, loggingFunction: this.logMessage, port: this.port }).getExpressRouter();
   };
 
   private logServerClose = () => {
     this.logMessage({
       type: LogTypes.SERVER,
-      message: "START",
-      date: moment().format("YYYY/MM/DD HH:mm:ss"),
+      message: 'START',
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
       matched: true,
     });
   };
@@ -197,14 +189,14 @@ class App {
     }
   };
 
-  private handleError = (error?: Error) => {
+  private handleError = (error: Error) => {
     if (!error) return;
 
     this.logMessage({
       type: LogTypes.SERVER,
       message: `ERROR ${error}`,
       matched: true,
-      date: moment().format("YYYY/MM/DD HH:mm:ss"),
+      date: moment().format('YYYY/MM/DD HH:mm:ss'),
     });
   };
 
@@ -217,9 +209,7 @@ class App {
 }
 
 function sleep(miliseconds: number) {
-  const sleepPromise = new Promise<void>((resolve, _reject) =>
-    setTimeout(() => resolve(), miliseconds)
-  );
+  const sleepPromise = new Promise((resolve, _reject) => setTimeout(() => resolve(), miliseconds));
   return sleepPromise;
 }
 

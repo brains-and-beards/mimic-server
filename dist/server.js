@@ -41,7 +41,7 @@ class Server {
             }
             else {
                 // eslint-disable-next-line no-console
-                console.error("[server] No server to stop, weird!");
+                console.error('[server] No server to stop, weird!');
                 return Promise.resolve(true);
             }
         };
@@ -60,7 +60,7 @@ class Server {
             }
             else {
                 // eslint-disable-next-line no-console
-                console.error("[server] No server to stop, weird!");
+                console.error('[server] No server to stop, weird!');
                 return Promise.resolve(true);
             }
         };
@@ -69,8 +69,8 @@ class Server {
         };
         this.watchConfigForChanges = (configPath) => {
             fs_1.default.watchFile(configPath, () => {
-                console.log("-----------------------------------------");
-                console.log(configPath + " changed");
+                console.log('-----------------------------------------');
+                console.log(configPath + ' changed');
                 this.readAndStart();
             });
         };
@@ -81,7 +81,7 @@ class Server {
             const normalizedData = normalizr_1.normalize(configData, DataSchema_1.ConfigSchema);
             return normalizedData;
         };
-        this.readAndStart = () => {
+        this.readAndStart = () => __awaiter(this, void 0, void 0, function* () {
             return this.readFile(this.configFilePath)
                 .then((json) => {
                 const config = this.parseConfig(json);
@@ -91,7 +91,7 @@ class Server {
                 this.errorHandler.checkErrorAndStopProcess(error);
                 this.stopServer();
             });
-        };
+        });
         this.restartServer = (config) => {
             if (this.app.isListening()) {
                 this.stopServer(() => this._startServer(config));
@@ -109,29 +109,25 @@ class Server {
                 return console.log(`server is listening`);
             });
         };
-        const runningInTest = process.env.NODE_ENV === "test";
+        const runningInTest = process.env.NODE_ENV === 'test';
         this.errorHandler = new errorHandler_1.default(handleErrors);
         this.app = new app_1.default(this.errorHandler, runningInTest ? false : useZeroMQ);
         if (!filename) {
-            runningInTest
-                ? (this.configFilePath = "./testmocker.json")
-                : (this.configFilePath = "./apimocker.json");
+            runningInTest ? (this.configFilePath = './testmocker.json') : (this.configFilePath = './apimocker.json');
         }
         else {
             this.configFilePath = filename;
         }
-        console.log("Reading config file from: " + this.configFilePath);
+        console.log('Reading config file from: ' + this.configFilePath);
     }
     readFile(configPath) {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.readFileAsync(configPath, { encoding: "utf-8" });
+            const data = yield this.readFileAsync(configPath, { encoding: 'utf-8' });
             const parsed = JSON.parse(data);
             const externals = [];
             if (parsed.importedConfigurations) {
                 for (const item of parsed.importedConfigurations) {
-                    const external = yield this.readFileAsync(item.path, {
-                        encoding: "utf-8",
-                    });
+                    const external = yield this.readFileAsync(item.path, { encoding: 'utf-8' });
                     const parsedExternal = JSON.parse(external);
                     externals.push(...parsedExternal.projects);
                 }
