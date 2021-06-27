@@ -32,6 +32,7 @@ class Server {
   };
 
   stopServer = (callback?: () => any) => {
+    this.unwatchConfigForChanges(this.configFilePath);
     if (this.app) {
       return this.app.stop((error) => {
         if (error) {
@@ -48,6 +49,7 @@ class Server {
   };
 
   stopServerSync = (callback?: () => any) => {
+    this.unwatchConfigForChanges(this.configFilePath);
     if (this.app) {
       return this.app.stopSync((error) => {
         if (error) {
@@ -95,12 +97,16 @@ class Server {
     });
   };
 
+  private unwatchConfigForChanges = (configPath: string) => {
+    fs.unwatchFile(configPath);
+  };
+
   private parseConfig = (configData: any): IConfig => {
     const normalizedData = normalize(configData, ConfigSchema);
     return normalizedData as IConfig;
   };
 
-  private readAndStart = () => {
+  private readAndStart = async() => {
     return this.readFile(this.configFilePath)
       .then((json) => {
         const config = this.parseConfig(json);

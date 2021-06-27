@@ -1,1 +1,101 @@
-"use strict";var __importDefault=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(exports,"__esModule",{value:!0}),exports.getMockedEndpointForQuery=exports.findQueryMatches=exports.endpointsInProject=exports.extractPathForURL=void 0;const lodash_1=__importDefault(require("lodash")),queryParser_1=require("./queryParser");exports.extractPathForURL=(e=>{const t=e.split("/")[1];return e.split("?")[0].replace(`/${t}`,"")}),exports.endpointsInProject=((e,t)=>{if(!e||!t||!t.endpoints)return null;const r=[],o=Object.keys(e);for(const s of o){if(lodash_1.default.find(t.endpoints,e=>e===s)){const t=e[s];r.push(t)}}return r}),exports.findQueryMatches=((e,t)=>{const r=queryParser_1.parseQuery(e),o=Object.keys(r),s=Object.keys(t);let n=!0;for(const e of o)if(s.includes(e)){const o=r[e],s=t[e];o.toString()!==s.toString()&&(n=!1)}else n=!1;return n}),exports.getMockedEndpointForQuery=((e,t,r)=>{const o=r.originalUrl.split("/")[1],s=exports.extractPathForURL(r.originalUrl),n=r.method,i=lodash_1.default.find(e,e=>e.slug===o),u=exports.endpointsInProject(t,i);if(!u)return[];const a=[];for(const e of u)if(e.enable){const t=e.path,o=e.method;if(t!==s||o!==n)continue;exports.findQueryMatches(e.request.params,r.query)&&a.push(e)}return a});
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getMockedEndpointForQuery = exports.findQueryMatches = exports.endpointsInProject = exports.extractPathForURL = void 0;
+const lodash_1 = __importDefault(require("lodash"));
+const queryParser_1 = require("./queryParser");
+/**
+ * This method extracts the path from the current request URL.
+ * @param url url of the requests
+ * @returns the path extracted from url
+ */
+exports.extractPathForURL = (url) => {
+    const projectName = url.split('/')[1];
+    // Remove query parameters from url
+    const requestEndpoint = url.split('?')[0];
+    // The url for parsing the endpoint will be $/{projectName}/endpoint, so we have to remove the projectName from the beginning of the url
+    return requestEndpoint.replace(`/${projectName}`, '');
+};
+/**
+ * A project contains the IDs of the related endpoints, this function filters the endpoint objects based on those IDs
+ * @param project The projects with the endpoint ID list
+ * @returns the endpoints of the given project or null if no endpoints are available
+ */
+exports.endpointsInProject = (endpoints, project) => {
+    if (!endpoints || !project || !project.endpoints) {
+        return null;
+    }
+    const selectedEndpoints = [];
+    // Endpoints are stored in dictionaries where the endpoint ID is the key
+    const keys = Object.keys(endpoints);
+    for (const currentKey of keys) {
+        // Checking if the endpoint present in the project
+        const endpoint = lodash_1.default.find(project.endpoints, (endp) => endp === currentKey);
+        if (endpoint) {
+            const currentValue = endpoints[currentKey];
+            selectedEndpoints.push(currentValue);
+        }
+    }
+    return selectedEndpoints;
+};
+/**
+ * Compares the keys and values of the requests params with the mocked endpoint's params.
+ * @param currentEndpointParams query params of the endpoint
+ * @param requestQuery query params of the request
+ * @returns true if all the parameters that are present in the mocked endpoint present in the request
+ */
+exports.findQueryMatches = (currentEndpointParams, requestQuery) => {
+    const parsed = queryParser_1.parseQuery(currentEndpointParams);
+    const parsedKeys = Object.keys(parsed);
+    const requestQueryKeys = Object.keys(requestQuery);
+    let match = true;
+    for (const currentKey of parsedKeys) {
+        if (requestQueryKeys.includes(currentKey)) {
+            const currentValue = parsed[currentKey];
+            const valueInRequest = requestQuery[currentKey];
+            if (currentValue.toString() !== valueInRequest.toString()) {
+                match = false;
+            }
+        }
+        else {
+            match = false;
+        }
+    }
+    return match;
+};
+/**
+ * If all the parameters that are present in the mocked endpoint present in the request too we should use
+ * the mocked endpoint even if the request has some additional parameters
+ * @param projects all projects from config file, the current projected based on the request should be selected.
+ * @param endpoints all endpoints from config file, the current endpoint based on the request should be selected.
+ * @param apiRequest we're checking if can be mocked
+ * @returns matching endpoints or null if no endpoints are available
+ */
+exports.getMockedEndpointForQuery = (projects, endpoints, apiRequest) => {
+    const projectName = apiRequest.originalUrl.split('/')[1];
+    const requestPath = exports.extractPathForURL(apiRequest.originalUrl);
+    const requestMethod = apiRequest.method;
+    const project = lodash_1.default.find(projects, (proj) => proj.slug === projectName);
+    const projectEndpoints = exports.endpointsInProject(endpoints, project);
+    if (!projectEndpoints) {
+        return [];
+    }
+    const matches = [];
+    for (const currentEndpoint of projectEndpoints) {
+        if (currentEndpoint.enable) {
+            const currentPath = currentEndpoint.path;
+            const currentMethod = currentEndpoint.method;
+            // If path or method don't match go to next endpoint
+            if (currentPath !== requestPath || currentMethod !== requestMethod) {
+                continue;
+            }
+            if (exports.findQueryMatches(currentEndpoint.request.params, apiRequest.query)) {
+                matches.push(currentEndpoint);
+            }
+        }
+    }
+    return matches;
+};
+//# sourceMappingURL=queryParamsMatcher.js.map
