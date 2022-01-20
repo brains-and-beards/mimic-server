@@ -123,7 +123,7 @@ class Router {
     const log: ILog = {
       method: req.method,
       path: req.path,
-      body: req.body,
+      body: Buffer.isBuffer(req.body) ? String.fromCharCode(...req.body) : req.body,
       matched,
       protocol: req.protocol,
       host: req.hostname,
