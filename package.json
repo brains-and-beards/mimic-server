@@ -1,5 +1,5 @@
 {
-  "name": "mimic-server",
+  "name": "@brainsbeards/mimic-server",
   "version": "0.10.1",
   "description": "Mimic Server",
   "scripts": {
@@ -34,7 +34,7 @@
     "url": "https://github.com/brains-and-beards/mimic-server/issues"
   },
   "homepage": "https://github.com/brains-and-beards/mimic-server",
-  "private": true,
+  "access": "public",
   "preferGlobal": true,
   "devDependencies": {
     "@types/express": "^4.16.0",
