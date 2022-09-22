@@ -209,8 +209,7 @@ class App {
 }
 
 function sleep(miliseconds: number) {
-  const sleepPromise = new Promise((resolve, _reject) => setTimeout(() => resolve(), miliseconds));
-  return sleepPromise;
+  return new Promise((resolve) => setTimeout(resolve, miliseconds));
 }
 
 export default App;
