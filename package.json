@@ -5,13 +5,12 @@
   "scripts": {
     "start": "cross-env NODE_ENV=dev yarn run serve",
     "stop": "killall node",
-    "build": "yarn gulp compile",
+    "build": "rm -rf dist && tsc",
     "serve": "node dist/runner.js",
     "watch-node": "nodemon dist/runner.js",
     "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
     "test": "jest --runInBand --forceExit",
     "watch-test": "yarn run test -- --watchAll",
-    "build-ts": "tsc",
     "watch-ts": "tsc -w",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "debug": "yarn run build && yarn run watch-debug",
@@ -58,9 +57,6 @@
     "eslint-config-recommended": "^4.1.0",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-simple-import-sort": "^5.0.3",
-    "gulp": "^3.9.1",
-    "gulp-typescript": "^5.0.0-alpha.3",
-    "gulp-uglify-es": "^1.0.4",
     "jest": "^26.6.0",
     "nodemon": "^1.18.2",
     "prettier": "^2.1.2",
@@ -68,7 +64,7 @@
     "supertest-as-promised": "^4.0.2",
     "ts-jest": "^26.4.1",
     "ts-node": "^7.0.0",
-    "typescript": "^4.0.3"
+    "typescript": "^4.8.3"
   },
   "dependencies": {
     "commander": "^2.16.0",
