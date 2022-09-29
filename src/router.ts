@@ -241,7 +241,7 @@ class Router {
       ? ''
       : '?' +
           keys
-            .reduce((a: any, k: string) => {
+            .reduce((a: string[], k: string) => {
               a.push(k + '=' + encodeURIComponent(obj[k]));
               return a;
             }, [])
