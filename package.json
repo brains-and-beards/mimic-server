@@ -19,6 +19,11 @@
     "generate-cert": "./utils/generate-cert.sh",
     "check-all": "sh check-all.sh"
   },
+  "files": [
+    "dist",
+    "src",
+    "index.js"
+  ],
   "bin": {
     "apimocker_server": "./dist/runner.js",
     "generate-cert": "./utils/generate-cert.sh"
